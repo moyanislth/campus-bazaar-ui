@@ -1,0 +1,52 @@
+/* 全局CSS变量定义 */
+:root {
+  --primary-color: #1d1d1f;    /* 深空灰主色 */
+  --secondary-color: #86868b;  /* 中性灰辅色 */
+  --accent-color: #0071e3;     /* 苹果经典蓝 */
+  --text-color: #1d1d1f;       /* 主文本色 */
+  --background-color: #f3f4f6; /* 背景基调色 */
+  --surface-color: #ffffff;    /* 卡片背景 */
+
+  --text-color: #1f2937;     /* 主要文字颜色 */
+  --success-color: #10b981;  /* 成功状态色 */
+  --error-color: #ef4444;    /* 错误提示色 */
+}
+
+/* 全局reset样式 */
+* {
+  margin: 0;          /* 清除默认外边距 */
+  padding: 0;         /* 清除默认内边距 */
+  box-sizing: border-box; /* 标准盒模型 */
+}
+
+ul, ol {
+  list-style: none;   /* 清除列表样式 */
+}
+
+/* 基础字体规范 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'PingFang SC', 'Microsoft YaHei', 'Source Han Sans', sans-serif;
+  color: var(--text-color);    /* 应用文字颜色变量 */
+  line-height: 1.6;           /* 舒适行高 */
+  background-color: var(--background-color); /* 应用背景色变量 */
+}
+
+/* 布局样式 */
+#app {
+  min-height: 100vh;     /* 最小视口高度 */
+  display: flex;         /* 弹性布局 */
+  flex-direction: column; /* 纵向排列 */
+}
+
+/* 工具类 */
+.text-center {
+  text-align: center;
+}
+
+.container {
+  width: 100%;          /* 占满父容器宽度，保持响应式布局 */
+  max-width: 1280px;    /* 最大内容宽度限制（适配桌面端大屏）*/
+  margin: 0 auto;       /* 水平居中（上下边距0，左右自动计算）*/
+  padding: 0 1rem;      /* 左右安全边距（防止内容贴边显示）*/
+}
