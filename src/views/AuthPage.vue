@@ -1,109 +1,212 @@
 <template>
   <div class="auth-container">
-    <!-- 卡片容器 -->
     <div class="auth-card">
       <!-- 选项卡导航 -->
       <div class="tab-nav">
         <button 
-          class="tab-btn"
-          :class="{ active: activeTab === 'login' }"
+          class="tab-btn" 
+          :class="{ active: activeTab === 'login' }" 
           @click="activeTab = 'login'"
-        >
-          登录
-        </button>
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'register' }"
+        >登录</button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'register' }" 
           @click="activeTab = 'register'"
-        >
-          注册
-        </button>
+        >注册</button>
       </div>
 
-      <!-- 动态表单区域 -->
-      <form @submit.prevent="handleSubmit" class="auth-form">
-        <!-- 手机号输入 -->
+      <!-- 登录表单 -->
+      <form v-if="activeTab === 'login'" @submit.prevent="handleLogin" class="auth-form">
         <div class="input-group">
-          <label>手机号</label>
-          <input
-            type="tel"
-            v-model="formData.phone"
-            placeholder="请输入11位手机号"
-            required
-          />
+          <label>手机号<span class="required">*</span></label>
+          <input v-model="loginForm.phone" type="tel" placeholder="请输入11位手机号" required />
         </div>
-
-        <!-- 密码输入 -->
-        <div class="input-group" v-if="activeTab === 'login'">
-          <label>密码</label>
-          <input
-            type="password"
-            v-model="formData.password"
-            placeholder="请输入密码"
-            required
-          />
-        </div>
-
-        <!-- 注册额外字段 -->
-        <template v-if="activeTab === 'register'">
-          <div class="input-group">
-            <label>验证码</label>
-            <div class="captcha-wrapper">
-              <input
-                type="text"
-                v-model="formData.captcha"
-                placeholder="6位验证码"
-                required
-              />
-              <img src="#" alt="验证码" class="captcha-img" />
-            </div>
+        <div class="input-group">
+          <label>密码<span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input 
+              :type="showPassword ? 'text' : 'password'" 
+              v-model="loginForm.password" 
+              placeholder="请输入密码" 
+              required 
+            />
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
           </div>
-          
-        </template>
-
-        <button type="submit" class="submit-btn">
-          {{ activeTab === 'login' ? '立即登录' : '注册账号' }}
-        </button>
+        </div>
+        <button type="submit" class="submit-btn">登录</button>
       </form>
 
-      <!-- 底部导航 -->
+      <!-- 注册表单 -->
+      <form v-else @submit.prevent="handleRegister" class="auth-form">
+        <div class="input-group">
+          <label>用户名<span class="required">*</span></label>
+          <input v-model="registerForm.username" type="text" placeholder="3-10位" required />
+        </div>
+        <div class="input-group">
+          <label>密码<span class="required">*</span></label>
+          <div class="password-wrapper">
+            <input 
+              :type="showPassword ? 'text' : 'password'" 
+              v-model="registerForm.password" 
+              placeholder="8-20位" 
+              required 
+            />
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>手机号<span class="required">*</span></label>
+          <input v-model="registerForm.phone" type="tel" placeholder="请输入11位手机号" required />
+        </div>
+        <div class="input-group">
+          <label>验证码<span class="required">*</span></label>
+          <div class="captcha-wrapper">
+            <input v-model="registerForm.captcha" type="text" placeholder="6位验证码" required />
+            <button type="button" class="captcha-btn" @click="getCaptcha">获取验证码</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>用户类型<span class="required">*</span></label>
+          <select v-model="registerForm.role" required>
+            <option value="0">普通用户</option>
+            <option value="1">商家用户</option>
+          </select>
+        </div>
+        <div v-if="registerForm.role === '1'" class="business-fields">
+          <div class="input-group">
+            <label>银行账户<span class="required">*</span></label>
+            <input v-model="registerForm.bankAccount" type="text" placeholder="请输入银行账户" required />
+          </div>
+          <div class="input-group">
+            <label>营业执照<span class="required">*</span></label>
+            <input type="file" @change="handleFileUpload('license', $event)" accept=".pdf,.jpg,.png" required />
+          </div>
+          <div class="input-group">
+            <label>身份证件<span class="required">*</span></label>
+            <input type="file" @change="handleFileUpload('idCard', $event)" accept=".jpg,.png" required />
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">注册</button>
+      </form>
+
+      <!-- 页脚导航 -->
       <div class="auth-footer">
-        <template v-if="activeTab === 'login'">
-          <span>新用户？</span>
-          <a @click="activeTab = 'register'">立即注册</a>
-        </template>
-        <template v-else>
-          <span>已有账号？</span>
-          <a @click="activeTab = 'login'">立即登录</a>
-        </template>
+        <span>{{ activeTab === 'login' ? '新用户？' : '已有账号？' }}</span>
+        <a @click="activeTab = activeTab === 'login' ? 'register' : 'login'">
+          {{ activeTab === 'login' ? '立即注册' : '立即登录' }}
+        </a>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-/**
- * 统一认证页面组件
- * 集成登录注册功能，采用动态表单切换模式
- */
 export default {
   name: 'AuthPage',
   data() {
     return {
+      // 当前激活的选项卡（登录/注册）
       activeTab: 'login',
-      formData: {
-        phone: '',
-        password: '',
-        captcha: '',
+      // 控制密码是否明文显示
+      showPassword: false,
+      // 登录表单数据结构
+      loginForm: {
+        phone: '',    // 用户手机号
+        password: ''  // 登录密码
+      },
+      // 注册表单数据结构
+      registerForm: {
+        username: '',    // 用户名（3-10位）
+        password: '',    // 密码（8-20位）
+        phone: '',       // 手机号（11位）
+        captcha: '',     // 短信验证码（6位数字）
+        role: '0',       // 用户角色 0-普通用户 1-商家用户
+        bankAccount: '', // 商家银行账户（角色为1时必填）
+        license: null,   // 营业执照文件对象
+        idCard: null     // 身份证件文件对象
       }
     }
   },
   methods: {
-    handleSubmit() {
-      console.log('提交数据:', {
-        mode: this.activeTab,
-        ...this.formData
-      })
+    // 验证登录表单数据
+// 返回 Boolean 表示是否通过验证
+validateLogin() {
+      const { phone, password } = this.loginForm;
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        alert('请输入有效的11位手机号');
+        return false;
+      }
+      if (!/^(?=.*[a-z])(?=.*[A-Z]).{8,20}$/.test(password)) {
+        alert('密码需8-20位，包含大小写字母');
+        return false;
+      }
+      return true;
+    },
+    // 验证注册表单数据
+// 包含用户名格式、密码强度、手机号有效性等校验
+// 商家用户需要额外校验银行账户和文件上传
+validateRegister() {
+      const { username, password, phone, captcha, role, bankAccount, license, idCard } = this.registerForm;
+      
+      if (!/^[a-zA-Z0-9]{4,16}$/.test(username)) {
+        alert('用户名需4-16位字母或数字');
+        return false;
+      }
+      if (!/^(?=.*[a-z])(?=.*[A-Z]).{8,20}$/.test(password)) {
+        alert('密码需8-20位，包含大小写字母');
+        return false;
+      }
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        alert('请输入有效的11位手机号');
+        return false;
+      }
+      if (!/^\d{6}$/.test(captcha)) {
+        alert('请输入6位验证码');
+        return false;
+      }
+      if (role === '1') {
+        if (!bankAccount?.trim()) {
+          alert('请输入银行账户');
+          return false;
+        }
+        if (!license || !idCard) {
+          alert('请上传营业执照和身份证件');
+          return false;
+        }
+      }
+      return true;
+    },
+    // 处理文件上传事件
+// @param field - 上传字段名(license/idCard)
+// @param event - 文件选择事件对象
+handleFileUpload(field, event) {
+      this.registerForm[field] = event.target.files[0];
+    },
+    // 获取短信验证码（待实现）
+// 需要对接短信服务API
+getCaptcha() {
+      // Implement captcha request logic
+      console.log('Requesting captcha for:', this.registerForm.phone);
+    },
+    // 处理登录表单提交
+// 1. 先进行表单验证 2. 调用登录API
+handleLogin() {
+      if (this.validateLogin()) {
+        console.log('Login data:', this.loginForm);
+        // Implement login API call
+      }
+    },
+    // 处理注册表单提交
+// 1. 表单验证 2. 处理文件上传 3. 调用注册API
+handleRegister() {
+      if (this.validateRegister()) {
+        console.log('Register data:', this.registerForm);
+        // Implement register API call
+      }
     }
   }
 }
@@ -113,35 +216,35 @@ export default {
 .auth-container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: #f8f9fa;
+  align-items: center;
+  background: #f5f5f5;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 420px;
-  padding: 2.5rem;
+  max-width: 400px;
+  padding: 2rem;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
 
 .tab-nav {
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .tab-btn {
   flex: 1;
   padding: 0.75rem;
   border: none;
-  background: transparent;
+  background: none;
+  font-size: 1rem;
   color: #666;
-  font-size: 1.1rem;
   border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
 .tab-btn.active {
@@ -152,7 +255,7 @@ export default {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .input-group {
@@ -162,60 +265,63 @@ export default {
 }
 
 .input-group label {
-  color: #1d1d1f;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-input {
+input, select {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s ease;
 }
 
-input:focus {
-  border-color: #007AFF;
+input:focus, select:focus {
   outline: none;
+  border-color: #007AFF;
 }
 
-.captcha-wrapper {
+.password-wrapper, .captcha-wrapper {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.captcha-btn {
-  padding: 0.75rem 1rem;
-  background: #f8f9fa;
+.eye-btn, .captcha-btn {
+  padding: 0.5rem;
+  background: #f5f5f5;
   border: 1px solid #ddd;
   border-radius: 8px;
-  color: #007AFF;
   cursor: pointer;
 }
 
 .submit-btn {
-  width: 100%;
-  padding: 1rem;
+  padding: 0.75rem;
   background: #007AFF;
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s;
 }
 
 .submit-btn:hover {
   opacity: 0.9;
 }
 
+.business-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
 .auth-footer {
   margin-top: 1.5rem;
-  padding-top: 1.5rem;
   text-align: center;
   color: #666;
-  border-top: 1px solid #eee;
 }
 
 .auth-footer a {
@@ -223,10 +329,8 @@ input:focus {
   cursor: pointer;
 }
 
-.agree-check {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+.required {
+  color: #ff4d4f;
+  margin-left: 0.25rem;
 }
 </style>
