@@ -61,11 +61,12 @@ export default {
     return {
       currentSlide: 0,
       carouselItems: [
-        { image: 'https://source.unsplash.com/random/800x400?electronics,1' },
-        { image: 'https://source.unsplash.com/random/800x400?book,2' },
-        { image: 'https://source.unsplash.com/random/800x400?clothes,3' },
-        { image: 'https://source.unsplash.com/random/800x400?furniture,4' },
-        { image: 'https://source.unsplash.com/random/800x400?sport,5' }
+        // { image: 'https://source.unsplash.com/random/800x400?electronics,1' },
+        { image: '/img/carousel/1.png' },
+        { image: '/img/carousel/2.png' },
+        { image: '/img/carousel/3.png' },
+        { image: '/img/carousel/4.png' },
+        { image: '/img/carousel/5.png' }
       ],
       products: Array.from({ length: 15 }, (_, i) => ({
         id: i + 1,
@@ -140,6 +141,8 @@ export default {
   font-size: 1.5rem;
   cursor: pointer;
   transition: background 0.3s;
+  z-index: 2;
+  /* 新增层叠顺序控制 */
 }
 
 .carousel-arrow:hover {
