@@ -6,7 +6,7 @@ const routes = [
     component: () => import('@/components/MainLayout.vue'),
     children: [
       {
-        path: '',
+        path: '',  // 父路由内的默认路由
         name: 'Home',
         component: () => import('@/views/HomeView.vue')
       }
@@ -20,8 +20,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(),  // 标准HTML5路由模式
+  routes                        // 注入路由表
 })
 
 export default router

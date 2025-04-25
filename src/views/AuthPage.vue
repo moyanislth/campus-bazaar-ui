@@ -105,6 +105,7 @@
 </template>
 
 <script>
+import { userAPI } from '@/api'
 export default {
   name: 'AuthPage',
   data() {
@@ -115,8 +116,8 @@ export default {
       showPassword: false,
       // 登录表单数据结构
       loginForm: {
-        phone: '',    // 用户手机号
-        password: ''  // 登录密码
+        phone: '',  // 用户手机号
+        password: '' // 登录密码
       },
       // 注册表单数据结构
       registerForm: {
@@ -133,80 +134,88 @@ export default {
   },
   methods: {
     // 验证登录表单数据
-// 返回 Boolean 表示是否通过验证
-validateLogin() {
-      const { phone, password } = this.loginForm;
+    validateLogin() {
+      const { phone, password } = this.loginForm
       if (!/^1[3-9]\d{9}$/.test(phone)) {
-        alert('请输入有效的11位手机号');
-        return false;
+        alert('请输入有效的11位手机号')
+        return false
       }
       if (!/^(?=.*[a-z])(?=.*[A-Z]).{8,20}$/.test(password)) {
-        alert('密码需8-20位，包含大小写字母');
-        return false;
+        alert('密码需8-20位，包含大小写字母')
+        return false
       }
-      return true;
+      return true
     },
+
     // 验证注册表单数据
-// 包含用户名格式、密码强度、手机号有效性等校验
-// 商家用户需要额外校验银行账户和文件上传
-validateRegister() {
-      const { username, password, phone, captcha, role, bankAccount, license, idCard } = this.registerForm;
+    validateRegister() {
+      const { 
+        username, 
+        password, 
+        phone, 
+        captcha, 
+        role, 
+        bankAccount, 
+        license, 
+        idCard 
+      } = this.registerForm
       
-      if (!/^[a-zA-Z0-9]{4,16}$/.test(username)) {
-        alert('用户名需4-16位字母或数字');
-        return false;
+      if (!/^[a-zA-Z0-9]{3,10}$/.test(username)) {
+        alert('用户名需3-10位字母或数字')
+        return false
       }
-      if (!/^(?=.*[a-z])(?=.*[A-Z]).{8,20}$/.test(password)) {
-        alert('密码需8-20位，包含大小写字母');
-        return false;
+      if (!/^[0-9a-zA-Z]{8,20}$/.test(password)) {
+        alert('密码需8-20位字母或数字')
+        return false  
       }
-      if (!/^1[3-9]\d{9}$/.test(phone)) {
-        alert('请输入有效的11位手机号');
-        return false;
+      // 手机号的验证逻辑: 11位数字，以1开头
+      if (!/^1\d{10}$/.test(phone)) {
+        alert('请输入有效的11位手机号')
+        return false
       }
       if (!/^\d{6}$/.test(captcha)) {
-        alert('请输入6位验证码');
-        return false;
+        alert('请输入6位验证码')
+        return false
       }
       if (role === '1') {
-        if (!bankAccount?.trim()) {
-          alert('请输入银行账户');
+        if (!bankAccount?.trim() || !/^\d{16}$/.test(bankAccount)) {
+          alert('请输入有效的16位数字银行账户');
           return false;
         }
         if (!license || !idCard) {
-          alert('请上传营业执照和身份证件');
-          return false;
+          alert('请上传营业执照和身份证件')
+          return false
         }
       }
-      return true;
+      return true
     },
+
     // 处理文件上传事件
-// @param field - 上传字段名(license/idCard)
-// @param event - 文件选择事件对象
-handleFileUpload(field, event) {
-      this.registerForm[field] = event.target.files[0];
+    handleFileUpload(field, event) {
+      this.registerForm[field] = event.target.files[0]
     },
-    // 获取短信验证码（待实现）
-// 需要对接短信服务API
-getCaptcha() {
-      // Implement captcha request logic
-      console.log('Requesting captcha for:', this.registerForm.phone);
+
+    // 获取短信验证码
+    getCaptcha() {
+      console.log('Requesting captcha for:', this.registerForm.phone)
     },
+
     // 处理登录表单提交
-// 1. 先进行表单验证 2. 调用登录API
-handleLogin() {
+    handleLogin() {
       if (this.validateLogin()) {
-        console.log('Login data:', this.loginForm);
-        // Implement login API call
+        console.log('Login data:', this.loginForm)
       }
     },
+
     // 处理注册表单提交
-// 1. 表单验证 2. 处理文件上传 3. 调用注册API
-handleRegister() {
+    handleRegister() {
       if (this.validateRegister()) {
-        console.log('Register data:', this.registerForm);
-        // Implement register API call
+        console.log('Register data:', this.registerForm)
+        userAPI.register(this.registerForm).then(res => {
+        console.log('Register result:', res)
+      })
       }
+      
     }
   }
 }
