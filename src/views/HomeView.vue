@@ -59,7 +59,9 @@ export default {
   name: 'HomeView',
   data() {
     return {
+      /** 轮播图 */
       currentSlide: 0,
+      timer: null, // 新增定时器引用
       carouselItems: [
         // { image: 'https://source.unsplash.com/random/800x400?electronics,1' },
         { image: '/img/carousel/1.png' },
@@ -68,27 +70,54 @@ export default {
         { image: '/img/carousel/4.png' },
         { image: '/img/carousel/5.png' }
       ],
-      products: Array.from({ length: 15 }, (_, i) => ({
+      /** 商品列表 */
+      products: Array.from({ length: 28 }, (_, i) => ({
         id: i + 1,
-        thumbnail: `https://source.unsplash.com/random/200x200?product-${i}`,
+        thumbnail: `https://ts1.tc.mm.bing.net/th/id/R-C.a7c465d8fc3e78cbc5f6a2d9344aedfe?rik=B%2fdEs7bRZYYkYQ&riu=http%3a%2f%2fimg95.699pic.com%2fphoto%2f60037%2f1974.jpg_wh300.jpg&ehk=DjgTWbXLL7BVeTTWXGWuGE%2fE1ZZTFp%2fFzvf1RhT17PI%3d&risl=&pid=ImgRaw&r=0`,
         price: (Math.random() * 500 + 50).toFixed(2),
         merchant: `商家${String.fromCharCode(65 + i % 5)}`,
         sales: Math.floor(Math.random() * 1000)
       }))
     }
   },
+  mounted() {
+    this.startAutoPlay(); // 组件挂载后启动自动播放
+  },
+  beforeUnmount() {
+    this.stopAutoPlay(); // 组件销毁前清除定时器
+  },
   methods: {
+    /** 启动自动播放 */
+    startAutoPlay() {
+      this.timer = setInterval(() => {
+        this.nextSlide();
+      }, 5000);
+    },
+    /** 停止自动播放 */
+    stopAutoPlay() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    },
     /** 切换到上一张轮播图 */
     prevSlide() {
       this.currentSlide = this.currentSlide === 0
         ? this.carouselItems.length - 1
         : this.currentSlide - 1
+      this.restartAutoPlay(); // 手动切换后重置定时器
     },
     /** 切换到下一张轮播图 */
     nextSlide() {
       this.currentSlide = this.currentSlide === this.carouselItems.length - 1
         ? 0
         : this.currentSlide + 1
+      this.restartAutoPlay(); // 手动切换后重置定时器
+    },
+    /** 重置自动播放定时器 */
+    restartAutoPlay() {
+      this.stopAutoPlay();
+      this.startAutoPlay();
     }
   }
 }
