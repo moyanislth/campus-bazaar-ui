@@ -37,5 +37,16 @@ const register = (userData) => {
   });
 };
 
-
-export { register };
+/**
+ * 登录接口
+ * @param {Object} loginData - 登录数据
+ * @returns {Promise} 登录结果
+ */
+const login = (loginData) => {
+  return request({
+    method: 'post',
+    url: '/api/user/login',
+    data: loginData,
+  })
+}
+export { register, login };

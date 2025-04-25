@@ -3,16 +3,9 @@
     <div class="auth-card">
       <!-- 选项卡导航 -->
       <div class="tab-nav">
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'login' }" 
-          @click="activeTab = 'login'"
-        >登录</button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'register' }" 
-          @click="activeTab = 'register'"
-        >注册</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'register' }"
+          @click="activeTab = 'register'">注册</button>
       </div>
 
       <!-- 登录表单 -->
@@ -24,12 +17,8 @@
         <div class="input-group">
           <label>密码<span class="required">*</span></label>
           <div class="password-wrapper">
-            <input 
-              :type="showPassword ? 'text' : 'password'" 
-              v-model="loginForm.password" 
-              placeholder="请输入密码" 
-              required 
-            />
+            <input :type="showPassword ? 'text' : 'password'" v-model="loginForm.password" placeholder="请输入密码"
+              required />
             <button type="button" class="eye-btn" @click="showPassword = !showPassword">
               {{ showPassword ? '🙈' : '👁️' }}
             </button>
@@ -47,12 +36,8 @@
         <div class="input-group">
           <label>密码<span class="required">*</span></label>
           <div class="password-wrapper">
-            <input 
-              :type="showPassword ? 'text' : 'password'" 
-              v-model="registerForm.password" 
-              placeholder="8-20位" 
-              required 
-            />
+            <input :type="showPassword ? 'text' : 'password'" v-model="registerForm.password" placeholder="6-20位"
+              required />
             <button type="button" class="eye-btn" @click="showPassword = !showPassword">
               {{ showPassword ? '🙈' : '👁️' }}
             </button>
@@ -83,11 +68,13 @@
           </div>
           <div class="input-group">
             <label>营业执照<span class="required">*</span></label>
-            <input type="file" @change="handleFileUpload('license', $event)" accept=".pdf,.jpg,.png" required />
+            <input type="file" ref="licenseInput" @change="handleFileUpload('license', $event)" accept=".pdf,.jpg,.png"
+              required />
           </div>
           <div class="input-group">
             <label>身份证件<span class="required">*</span></label>
-            <input type="file" @change="handleFileUpload('idCard', $event)" accept=".jpg,.png" required />
+            <input type="file" ref="idCardInput" @change="handleFileUpload('idCard', $event)" accept=".jpg,.png"
+              required />
           </div>
         </div>
         <button type="submit" class="submit-btn">注册</button>
@@ -106,6 +93,9 @@
 
 <script>
 import { userAPI } from '@/api'
+import { ElMessage } from 'element-plus';
+import 'element-plus/dist/index.css';
+
 export default {
   name: 'AuthPage',
   data() {
@@ -122,7 +112,7 @@ export default {
       // 注册表单数据结构
       registerForm: {
         username: '',    // 用户名（3-10位）
-        password: '',    // 密码（8-20位）
+        password: '',    // 密码（6-20位）
         phone: '',       // 手机号（11位）
         captcha: '',     // 短信验证码（6位数字）
         role: '0',       // 用户角色 0-普通用户 1-商家用户
@@ -136,12 +126,18 @@ export default {
     // 验证登录表单数据
     validateLogin() {
       const { phone, password } = this.loginForm
-      if (!/^1[3-9]\d{9}$/.test(phone)) {
-        alert('请输入有效的11位手机号')
+      if (!/^1\d{10}$/.test(phone)) {
+        ElMessage({
+          type: 'error',
+          message: '请输入有效的11位手机号'
+        })
         return false
       }
-      if (!/^(?=.*[a-z])(?=.*[A-Z]).{8,20}$/.test(password)) {
-        alert('密码需8-20位，包含大小写字母')
+      if (!/^[0-9a-zA-Z]{6,20}$/.test(password)) {
+        ElMessage({
+          type: 'error',
+          message: '密码需6-20位字母或数字'
+        })
         return false
       }
       return true
@@ -149,24 +145,24 @@ export default {
 
     // 验证注册表单数据
     validateRegister() {
-      const { 
-        username, 
-        password, 
-        phone, 
-        captcha, 
-        role, 
-        bankAccount, 
-        license, 
-        idCard 
+      const {
+        username,
+        password,
+        phone,
+        captcha,
+        role,
+        bankAccount,
+        license,
+        idCard
       } = this.registerForm
-      
+
       if (!/^[a-zA-Z0-9]{3,10}$/.test(username)) {
         alert('用户名需3-10位字母或数字')
         return false
       }
-      if (!/^[0-9a-zA-Z]{8,20}$/.test(password)) {
-        alert('密码需8-20位字母或数字')
-        return false  
+      if (!/^[0-9a-zA-Z]{6,20}$/.test(password)) {
+        alert('密码需6-20位字母或数字')
+        return false
       }
       // 手机号的验证逻辑: 11位数字，以1开头
       if (!/^1\d{10}$/.test(phone)) {
@@ -204,6 +200,17 @@ export default {
     handleLogin() {
       if (this.validateLogin()) {
         console.log('Login data:', this.loginForm)
+        userAPI.login(this.loginForm).then(res => {
+          console.log('Login result:', res)
+          if (res.code === 200) {
+            ElMessage({
+              type: 'success',
+              message: '登录成功'
+            })
+            // 登录成功后跳转到首页或其他页面
+            this.$router.push('/')
+          }
+        })
       }
     },
 
@@ -212,10 +219,34 @@ export default {
       if (this.validateRegister()) {
         console.log('Register data:', this.registerForm)
         userAPI.register(this.registerForm).then(res => {
-        console.log('Register result:', res)
-      })
+          console.log('Register result:', res)
+          if (res.code === 200) {
+            ElMessage({
+              type: 'success',
+              message: '注册成功'
+            })
+            // 重置注册表单
+            this.registerForm = {
+              username: '',
+              password: '',
+              phone: '',
+              captcha: '',
+              role: '0',
+              bankAccount: '',
+              license: null,
+              idCard: null
+            }
+            // 手动清除文件输入框的值（DOM操作）
+            if (this.registerForm.role === '1') {
+              this.$refs.licenseInput.value = '';
+              this.$refs.idCardInput.value = '';
+            }
+            // 切换到登录选项卡
+            this.activeTab = 'login'
+          }
+        })
       }
-      
+
     }
   }
 }
@@ -236,7 +267,7 @@ export default {
   padding: 2rem;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .tab-nav {
@@ -278,24 +309,28 @@ export default {
   font-weight: 500;
 }
 
-input, select {
+input,
+select {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   outline: none;
   border-color: #007AFF;
 }
 
-.password-wrapper, .captcha-wrapper {
+.password-wrapper,
+.captcha-wrapper {
   display: flex;
   gap: 0.5rem;
 }
 
-.eye-btn, .captcha-btn {
+.eye-btn,
+.captcha-btn {
   padding: 0.5rem;
   background: #f5f5f5;
   border: 1px solid #ddd;
