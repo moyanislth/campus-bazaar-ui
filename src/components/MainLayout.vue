@@ -40,7 +40,7 @@ export default {
     return {
       navItems: [
         { title: '首页', path: '/' },
-        { title: '商品', path: '/items' },
+        { title: '商品', path: '/products' },
         { title: '我的', path: '/profile' }
       ]
     }

@@ -9,6 +9,11 @@ const routes = [
         path: '',  // 父路由内的默认路由
         name: 'Home',
         component: () => import('@/views/HomeView.vue')
+      },
+      {
+        path: '/products',  // 父路由内的默认路由
+        name: 'Products',
+        component: () => import('@/views/ProductView.vue')
       }
     ]
   },
