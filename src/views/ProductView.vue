@@ -3,6 +3,9 @@
         <!-- 搜索排序栏 -->
         <div class="search-bar">
             <el-input v-model="searchQuery" placeholder="搜索商品名称..." class="search-input" clearable />
+            <el-button type="primary" class="search-btn" @click="loadProducts">
+                立即搜索
+            </el-button>
             <el-select v-model="sortBy" placeholder="排序方式" class="sort-select" @change="loadProducts">
                 <el-option label="最新商品" value="newest" />
                 <el-option label="销量最高" value="sales" />
@@ -47,7 +50,7 @@ export default {
             loading: false,
             products: [],
             // 模拟数据生成
-            mockProducts: Array.from({ length: 50 }, (_, i) => ({
+            mockProducts: Array.from({ length: 3 }, (_, i) => ({
                 id: i + 1,
                 name: `商品 ${i + 1}`,
                 price: (Math.random() * 500 + 50).toFixed(2),
