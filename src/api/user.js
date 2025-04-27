@@ -49,4 +49,32 @@ const login = (loginData) => {
     data: loginData,
   })
 }
-export { register, login };
+
+/**
+ * 获取图形验证码接口
+ * @returns {Promise} 验证码请求结果
+ */
+const getCaptcha = () => {
+  return request({
+    method: 'post',
+    url: '/api/verify/getcode',
+    responseType: 'blob',  // blob是二进制数据类型，用于处理图片
+    withCredentials: true  // 允许携带凭证
+  })
+}
+
+/**
+ * 校验验证码接口
+ * @param {String} code 用户输入的验证码
+ * @returns {Promise} 校验结果
+ */
+const checkCaptcha = (code, token) => {
+  return request({
+    method: 'get',
+    url: '/api/verify/checkcode',
+    params: { code },
+    withCredentials: true
+  })
+}
+
+export { register, login, getCaptcha, checkCaptcha };

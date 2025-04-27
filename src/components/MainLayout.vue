@@ -41,7 +41,8 @@ export default {
       navItems: [
         { title: '首页', path: '/' },
         { title: '商品', path: '/products' },
-        { title: '我的', path: '/profile' }
+        { title: '我的', path: '/profile' },
+        { title: '登出', path: '/auth' }
       ]
     }
   }

@@ -44,17 +44,26 @@ service.interceptors.response.use(
    */
   response => {
     const res = response.data;
-    // 同时检查HTTP状态码和业务状态码
-    if (response.status === 200 && res.code === 200) {
-      return res;
+  
+    console.log('响应数据:', res); // 打印响应数据,方便调试
+    // 非业务响应处理
+    if (typeof res.code === 'undefined') {
+      return response;
     }
+
+    // 标准业务响应处理
+    if (response.status === 200 && res.code === 200) {
+      return response;
+    }
+
     // 业务逻辑错误处理
-    const errMessage = res.data || '请求失败';
+    const errMessage = res.data || res.data?.message || '请求失败';
     ElMessage({
       message: errMessage,
-      type: 'warning'
-      });
-    return res
+      type: 'warning',
+      duration: 3000
+    });
+    return Promise.reject(new Error(errMessage));
   },
   /**
    * 响应错误处理

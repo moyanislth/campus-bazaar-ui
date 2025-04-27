@@ -50,8 +50,8 @@
         <div class="input-group">
           <label>验证码<span class="required">*</span></label>
           <div class="captcha-wrapper">
-            <input v-model="registerForm.captcha" type="text" placeholder="6位验证码" required />
-            <button type="button" class="captcha-btn" @click="getCaptcha">获取验证码</button>
+            <input v-model="registerForm.captcha" type="text" placeholder="6位字母或数字" required />
+            <img :src="captchaImage" @click="getCaptcha" class="captcha-img" alt="验证码" />
           </div>
         </div>
         <div class="input-group">
@@ -119,6 +119,17 @@ export default {
         bankAccount: '', // 商家银行账户（角色为1时必填）
         license: null,   // 营业执照文件对象
         idCard: null     // 身份证件文件对象
+      },
+      captchaImage: '',     // 验证码图片URL
+    }
+  },
+  mounted() {
+    // 初始化逻辑（保留空函数）
+  },
+  watch: {
+    activeTab(newVal) {
+      if (newVal === 'register') {
+        this.getCaptcha();
       }
     }
   },
@@ -169,8 +180,8 @@ export default {
         alert('请输入有效的11位手机号')
         return false
       }
-      if (!/^\d{6}$/.test(captcha)) {
-        alert('请输入6位验证码')
+      if (!/^[A-Za-z0-9]{6}$/.test(captcha)) {
+        alert('请输入6位字母或数字')
         return false
       }
       if (role === '1') {
@@ -191,9 +202,67 @@ export default {
       this.registerForm[field] = event.target.files[0]
     },
 
-    // 获取短信验证码
-    getCaptcha() {
-      console.log('Requesting captcha for:', this.registerForm.phone)
+    /** 获取验证码图片 */
+    async getCaptcha() {
+      try {
+        const response = await userAPI.getCaptcha();
+        // 使用 URL.createObjectURL() 方法将 Blob 转换为 URL
+        let url = URL.createObjectURL(response.data);
+        this.captchaImage = url;
+      } catch (error) {
+        ElMessage.error('验证码加载失败');
+        console.error('Captcha error:', error);
+      }
+    },
+
+    // 处理注册表单提交
+    async handleRegister() {
+      if (!this.validateRegister()) return;
+
+      try {
+        // 验证码校验
+        const checkRes = await userAPI.checkCaptcha(
+          this.registerForm.captcha,
+        );
+        // console.log('Captcha check result:', checkRes);
+        if (!checkRes.data) {
+          ElMessage.error('验证码错误');
+          this.getCaptcha();
+          return;
+        }
+        // 执行注册请求
+        const regRes = await userAPI.register(this.registerForm);
+        // console.log('Register result:', regRes);
+        if (regRes.data.code === 200) {
+          ElMessage.success('注册成功');
+
+          // 重置表单数据
+          // 释放验证码图片URL
+          URL.revokeObjectURL(this.captchaImage);
+          // 重置表单数据
+          this.registerForm = {
+            username: '',
+            password: '',
+            phone: '',
+            captcha: '',
+            role: '0',
+            bankAccount: '',
+            license: null,
+            idCard: null
+          };
+
+          // 清除文件输入框
+          if (this.$refs.licenseInput) {
+            this.$refs.licenseInput.value = '';
+            this.$refs.idCardInput.value = '';
+          }
+
+          // 切换到登录选项卡
+          this.activeTab = 'login';
+        }
+      } catch (error) {
+        console.error(error);
+      }
     },
 
     // 处理登录表单提交
@@ -214,40 +283,7 @@ export default {
       }
     },
 
-    // 处理注册表单提交
-    handleRegister() {
-      if (this.validateRegister()) {
-        console.log('Register data:', this.registerForm)
-        userAPI.register(this.registerForm).then(res => {
-          console.log('Register result:', res)
-          if (res.code === 200) {
-            ElMessage({
-              type: 'success',
-              message: '注册成功'
-            })
-            // 重置注册表单
-            this.registerForm = {
-              username: '',
-              password: '',
-              phone: '',
-              captcha: '',
-              role: '0',
-              bankAccount: '',
-              license: null,
-              idCard: null
-            }
-            // 手动清除文件输入框的值（DOM操作）
-            if (this.registerForm.role === '1') {
-              this.$refs.licenseInput.value = '';
-              this.$refs.idCardInput.value = '';
-            }
-            // 切换到登录选项卡
-            this.activeTab = 'login'
-          }
-        })
-      }
 
-    }
   }
 }
 </script>
@@ -327,6 +363,7 @@ select:focus {
 .captcha-wrapper {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .eye-btn,
@@ -336,6 +373,17 @@ select:focus {
   border: 1px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.captcha-img {
+  height: 35px;
+  width: auto;
+  min-width: 100px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  object-fit: cover;
+  align-self: center;
 }
 
 .submit-btn {
