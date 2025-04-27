@@ -9,7 +9,7 @@ import router from '../router';
  * @property {number} timeout - 请求超时时间（毫秒）
  */
 const service = axios.create({
-  baseURL: 'http://localhost:8080', // 添加协议前缀
+  baseURL: 'http://localhost:8081', // 添加协议前缀
   timeout: 5000 
 });
 

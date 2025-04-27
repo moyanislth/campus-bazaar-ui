@@ -14,6 +14,11 @@ const routes = [
         path: '/products',  // 父路由内的默认路由
         name: 'Products',
         component: () => import('@/views/ProductView.vue')
+      },
+      {
+        path: '/profile',  // 父路由内的默认路由
+        name: 'Profile',
+        component: () => import('@/views/ProfileView.vue')
       }
     ]
   },
