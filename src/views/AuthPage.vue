@@ -24,6 +24,13 @@
             </button>
           </div>
         </div>
+        <div class="remember-me">
+          <label>
+            <input type="checkbox" v-model="rememberMe">
+            记住我
+          </label>
+          <span class="security-tip"> </span>
+        </div>
         <button type="submit" class="submit-btn">登录</button>
       </form>
 
@@ -104,6 +111,8 @@ export default {
       activeTab: 'login',
       // 控制密码是否明文显示
       showPassword: false,
+      // 控制记住我选项
+      rememberMe: false,
       // 登录表单数据结构
       loginForm: {
         phone: '',  // 用户手机号
@@ -124,7 +133,12 @@ export default {
     }
   },
   mounted() {
-    // 初始化逻辑（保留空函数）
+    const savedLogin = localStorage.getItem('savedLogin');
+    if (savedLogin) {
+      const { phone, password } = JSON.parse(savedLogin);
+      this.loginForm = { phone, password };
+      this.rememberMe = true;
+    }
   },
   watch: {
     activeTab(newVal) {
@@ -219,49 +233,45 @@ export default {
     async handleRegister() {
       if (!this.validateRegister()) return;
 
-      try {
-        // 验证码校验
-        const checkRes = await userAPI.checkCaptcha(
-          this.registerForm.captcha,
-        );
-        // console.log('Captcha check result:', checkRes);
-        if (!checkRes.data) {
-          ElMessage.error('验证码错误');
-          this.getCaptcha();
-          return;
+      // 验证码校验
+      const checkRes = await userAPI.checkCaptcha(
+        this.registerForm.captcha,
+      );
+      // console.log('Captcha check result:', checkRes);
+      if (!checkRes.data) {
+        ElMessage.error('验证码错误');
+        this.getCaptcha();
+        return;
+      }
+      // 执行注册请求
+      const regRes = await userAPI.register(this.registerForm);
+      // console.log('Register result:', regRes);
+      if (regRes.data.code === 200) {
+        ElMessage.success('注册成功');
+
+        // 重置表单数据
+        // 释放验证码图片URL
+        URL.revokeObjectURL(this.captchaImage);
+        // 重置表单数据
+        this.registerForm = {
+          username: '',
+          password: '',
+          phone: '',
+          captcha: '',
+          role: '0',
+          bankAccount: '',
+          license: null,
+          idCard: null
+        };
+
+        // 清除文件输入框
+        if (this.$refs.licenseInput) {
+          this.$refs.licenseInput.value = '';
+          this.$refs.idCardInput.value = '';
         }
-        // 执行注册请求
-        const regRes = await userAPI.register(this.registerForm);
-        // console.log('Register result:', regRes);
-        if (regRes.data.code === 200) {
-          ElMessage.success('注册成功');
 
-          // 重置表单数据
-          // 释放验证码图片URL
-          URL.revokeObjectURL(this.captchaImage);
-          // 重置表单数据
-          this.registerForm = {
-            username: '',
-            password: '',
-            phone: '',
-            captcha: '',
-            role: '0',
-            bankAccount: '',
-            license: null,
-            idCard: null
-          };
-
-          // 清除文件输入框
-          if (this.$refs.licenseInput) {
-            this.$refs.licenseInput.value = '';
-            this.$refs.idCardInput.value = '';
-          }
-
-          // 切换到登录选项卡
-          this.activeTab = 'login';
-        }
-      } catch (error) {
-        console.error(error);
+        // 切换到登录选项卡
+        this.activeTab = 'login';
       }
     },
 
@@ -271,7 +281,17 @@ export default {
         console.log('Login data:', this.loginForm)
         userAPI.login(this.loginForm).then(res => {
           console.log('Login result:', res)
-          if (res.code === 200) {
+          if (res.data.code === 200) {
+            if (this.rememberMe) {
+              localStorage.setItem('savedLogin',
+                JSON.stringify({
+                  phone: this.loginForm.phone,
+                  password: this.loginForm.password
+                })
+              );
+            } else {
+              localStorage.removeItem('savedLogin');
+            }
             ElMessage({
               type: 'success',
               message: '登录成功'
@@ -424,5 +444,19 @@ select:focus {
 .required {
   color: #ff4d4f;
   margin-left: 0.25rem;
+}
+
+/* 记住我 样式调整 */
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.security-tip {
+  color: #666;
+  font-size: 12px;
 }
 </style>
