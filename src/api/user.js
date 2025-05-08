@@ -77,4 +77,6 @@ const checkCaptcha = (code, token) => {
   })
 }
 
+
+
 export { register, login, getCaptcha, checkCaptcha };

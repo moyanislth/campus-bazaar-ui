@@ -5,36 +5,23 @@
       <el-avatar :size="80" :src="user.avatar" class="user-avatar" />
       <h2 class="username">{{ user.username }}</h2>
       <p class="user-email">{{ user.email }}</p>
-      
+
       <!-- 新增个人介绍 -->
       <div class="introduction-section">
         <h3>个人介绍</h3>
-        <el-input 
-          v-model="user.introduction"
-          type="textarea"
-          :rows="3"
-          placeholder="介绍一下自己..."
-        />
+        <el-input v-model="user.introduction" type="textarea" :rows="3" placeholder="介绍一下自己..." />
       </div>
-      
+
       <!-- 邮箱编辑 -->
       <div class="info-field">
         <h3>邮箱</h3>
-        <el-input 
-          v-model="user.email"
-          type="email"
-          placeholder="请输入有效邮箱地址"
-        />
+        <el-input v-model="user.email" type="email" placeholder="请输入有效邮箱地址" />
       </div>
 
       <!-- 微信绑定 -->
       <div class="info-field">
         <h3>微信</h3>
-        <el-input 
-          v-model="user.wechat"
-          placeholder="请输入微信号"
-          :maxlength="20"
-        />
+        <el-input v-model="user.wechat" placeholder="请输入微信号" :maxlength="20" />
       </div>
     </div>
 
@@ -48,12 +35,8 @@
       </div>
 
       <div class="address-list">
-        <div 
-          v-for="address in user.addresses"
-          :key="address.id"
-          class="address-card"
-          :class="{ 'default-address': address.isDefault }"
-        >
+        <div v-for="address in user.addresses" :key="address.id" class="address-card"
+          :class="{ 'default-address': address.isDefault }">
           <div class="address-content">
             <div class="address-info">
               <span class="tag" v-if="address.isDefault">默认</span>
@@ -103,9 +86,9 @@ export default {
         avatar: '/img/avatar-default.png',
         introduction: '这个人很懒，什么也没留下~',  // 新增个人介绍字段
         addresses: [  // 新增收货地址数据
-          { 
-            id: 1, 
-            name: '张三', 
+          {
+            id: 1,
+            name: '张三',
             phone: '13800138000',
             address: 'XX大学3号宿舍楼201室',
             isDefault: true
@@ -119,7 +102,7 @@ export default {
   methods: {
     /** 打开地址编辑弹窗 */
     openAddressEditor(address = null) {
-      this.editingAddress = address ? {...address} : {
+      this.editingAddress = address ? { ...address } : {
         name: '',
         phone: '',
         address: '',
@@ -127,7 +110,7 @@ export default {
       }
       this.showAddressDialog = true
     },
-    
+
     /** 保存地址信息 */
     saveAddress() {
       if (this.editingAddress.id) {
@@ -143,7 +126,7 @@ export default {
       }
       this.showAddressDialog = false
     },
-    
+
     /** 删除地址 */
     deleteAddress(id) {
       this.user.addresses = this.user.addresses.filter(a => a.id !== id)

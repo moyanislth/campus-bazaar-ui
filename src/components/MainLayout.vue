@@ -36,14 +36,29 @@
  */
 export default {
   name: 'MainLayout',
-  data() {
-    return {
-      navItems: [
+  methods: {
+    /**
+     * 生成导航项数组
+     * 根据用户角色动态添加管理入口
+     */
+    generateNavItems() {
+      const baseItems = [
         { title: '首页', path: '/' },
         { title: '商品', path: '/products' },
-        { title: '我的', path: '/profile' },
-        { title: '登出', path: '/auth' }
+        { title: '我的', path: '/profile' }
       ]
+
+      // 模拟用户角色检测，实际应替换为Vuex状态获取
+      baseItems.push({ title: '后台', path: '/admin', class: 'admin-link' })
+
+
+      baseItems.push({ title: '登出', path: '/auth' })
+      return baseItems
+    }
+  },
+  data() {
+    return {
+      navItems: this.generateNavItems()
     }
   }
 }
