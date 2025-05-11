@@ -13,12 +13,12 @@ const routes = [
       {
         path: '/products',
         name: 'Products',
-        component: () => import('@/views/ProductView.vue')
+        component: () => import('@/views/common/ProductView.vue')
       },
       {
         path: '/profile',
         name: 'Profile',
-        component: () => import('@/views/ProfileView.vue')
+        component: () => import('@/views/common/ProfileView.vue')
       }
     ]
   },
@@ -32,7 +32,7 @@ const routes = [
         path: '',
         name: 'AdminDashboard',
         component: () => import('@/views/admin/AdminDashboard.vue'),
-        meta: { title: '管理仪表盘' }
+        meta: { title: '仪表盘' }
       },
       {
         path: 'users',
@@ -44,7 +44,7 @@ const routes = [
         path: 'products',
         name: 'ProductReview',
         component: () => import('@/views/admin/ProductReview.vue'),
-        meta: { title: '商品审核' }
+        meta: { title: '商品管理' }
       }
     ]
   },
