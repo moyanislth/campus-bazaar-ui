@@ -198,7 +198,6 @@ export default {
 <style scoped>
 .product-review {
     padding: 20px;
-    background: #fff;
 }
 
 .filter-card {
