@@ -1,5 +1,28 @@
 import { request } from '@/utils/request';
 
+/**
+ * 获取所有用户信息接口
+ * @returns {Promise} 用户信息请求结果
+ */
+const getAllUsers = () => {
+  return request({
+    method: 'get',
+    url: '/api/user/getAllUser',
+  })
+}
+
+/**
+ * 通过注册接口
+ * @param {String} userId 用户ID
+ * @returns {Promise} 审核结果
+ */
+const passUser = (userId) => {
+  return request({
+    method: 'Patch',
+    url: '/api/user/updateUserStatus',
+    data: { userId },
+  })
+}
 
 /**
  * 用户注册接口（支持文件上传）
@@ -79,4 +102,4 @@ const checkCaptcha = (code, token) => {
 
 
 
-export { register, login, getCaptcha, checkCaptcha };
+export { getAllUsers, register, login, getCaptcha, checkCaptcha, passUser };

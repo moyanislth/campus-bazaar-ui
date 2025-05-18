@@ -1,5 +1,6 @@
 <template>
     <div class="user-management">
+        <!-- 搜索和筛选区域 -->
         <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
                 <el-row :gutter="24">
@@ -39,6 +40,7 @@
             </el-form>
         </el-card>
 
+        <!-- 表格区域 -->
         <el-table v-loading="loading" :data="userList" border style="width: 100%" class="mt-4" stripe
             :header-cell-style="{ background: '#f8f9fa', color: '#606266' }" :cell-style="{ padding: '12px 0' }">
             <el-table-column prop="id" label="用户ID" width="140" align="center" />
@@ -61,7 +63,7 @@
                         </el-button>
                         <el-button v-if="row.status === 1" type="danger" link size="small"
                             @click="handleDisable(row.id)">
-                            禁用
+                            忽略
                         </el-button>
                         <el-button type="info" link size="small" @click="showDetail(row)">
                             详情
@@ -71,6 +73,7 @@
             </el-table-column>
         </el-table>
 
+        <!-- 分页器 -->
         <div class="pagination-container">
             <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]" :background="true" layout="total, sizes, prev, pager, next"
@@ -80,6 +83,10 @@
 </template>
 
 <script>
+import { userAPI } from '@/api'
+import { Search } from '@element-plus/icons-vue'
+import DateUtil from '@/utils/dateUtil.js';
+
 export default {
     name: 'UserManagement',
     created() {
@@ -93,63 +100,40 @@ export default {
             currentPage: 1,
             pageSize: 10,
             total: 0,
-            userList: [],
-            mockData: [
-                {
-                    id: 1001,
-                    username: '测试用户1',
-                    phone: '13800138001',
-                    registerTime: '2024-03-01 10:00',
-                    status: 0
-                },
-                {
-                    id: 1002,
-                    username: '待审用户2',
-                    phone: '13800138002',
-                    registerTime: '2024-03-02 11:00',
-                    status: 0
-                },
-                {
-                    id: 1003,
-                    username: '已通过用户',
-                    phone: '13800138003',
-                    registerTime: '2024-03-03 12:00',
-                    status: 1
-                },
-                {
-                    id: 1004,
-                    username: '禁用用户',
-                    phone: '13800138004',
-                    registerTime: '2024-03-04 13:00',
-                    status: 2
-                }
-            ]
+            userList: [], // 用于显示的数据
+            userListData: [], // 用于存储原始数据
         }
     },
     methods: {
         async fetchUsers() {
             this.loading = true
             try {
-                // 模拟API请求延迟
-                await new Promise(resolve => setTimeout(resolve, 500))
+                // 获取原始数据
+                this.userListData = await userAPI.getAllUsers();
+                this.userList = this.userListData.data;
+                // 数据格式转换
+                const formattedData = this.userListData.data.map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    phone: user.phone,
+                    registerTime: DateUtil.formatCN(user.createdAt),
+                    status: user.status
+                }));
 
-                const filteredData = this.mockData.filter(item => {
-                    const searchLower = this.searchKey.toLowerCase()
-                    return (
-                        String(item.id).includes(this.searchKey) ||
-                        item.username.toLowerCase().includes(searchLower) ||
-                        item.phone.includes(this.searchKey)
-                    ) && (
-                            this.filterStatus === '' ||
-                            String(item.status) === this.filterStatus
-                        )
-                })
-
-                this.total = filteredData.length
-                this.userList = filteredData.slice(
+                // 分页处理
+                this.total = formattedData.length;
+                /**
+                 * slice方法用于从数组中提取索引内的元素。
+                 * - this.pageSize：每页显示的数量。
+                 * - this.currentPage：当前页码。
+                 */
+                this.userList = formattedData.slice(
                     (this.currentPage - 1) * this.pageSize,
                     this.currentPage * this.pageSize
-                )
+                );
+            } catch (error) {
+                console.error('数据获取失败:', error);
+                this.$message.error('数据加载失败');
             } finally {
                 this.loading = false
             }
@@ -183,11 +167,7 @@ export default {
             this.$confirm('确定要通过该用户吗?', '提示', {
                 type: 'warning'
             }).then(() => {
-                // 实际这里应该调用API
-                const index = this.mockData.findIndex(user => user.id === id)
-                if (index !== -1) {
-                    this.mockData[index].status = 1
-                }
+                userAPI.passUser(id)
                 this.fetchUsers()
                 this.$message.success('操作成功')
             })
@@ -197,9 +177,9 @@ export default {
                 type: 'warning'
             }).then(() => {
                 // 实际这里应该调用API
-                const index = this.mockData.findIndex(user => user.id === id)
+                const index = this.userListData.findIndex(user => user.id === id)
                 if (index !== -1) {
-                    this.mockData[index].status = 2
+                    this.userListData[index].status = 2
                 }
                 this.fetchUsers()
                 this.$message.success('操作成功')

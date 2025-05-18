@@ -100,6 +100,7 @@
 
 <script>
 import { userAPI } from '@/api'
+import { request } from '@/utils/request';
 import { ElMessage } from 'element-plus';
 import 'element-plus/dist/index.css';
 

@@ -45,15 +45,16 @@ service.interceptors.response.use(
   response => {
     const res = response.data;
   
-    console.log('响应数据:', res); // 打印响应数据,方便调试
+    console.log('response.data:', res); // 打印响应数据,方便调试
     // 非业务响应处理
     if (typeof res.code === 'undefined') {
+      console.log('response:', response); // 打印响应数据,方便调试
       return response;
     }
 
-    // 标准业务响应处理
+    // 标准业务响应处理,响应成功同时后端返回了code为200
     if (response.status === 200 && res.code === 200) {
-      return response;
+      return res;
     }
 
     // 业务逻辑错误处理
