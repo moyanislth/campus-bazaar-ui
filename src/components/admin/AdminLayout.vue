@@ -22,26 +22,40 @@
                     {{ item.meta.title }}
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <router-view />
+            <router-view :userListData="userListData" :productsData="productsData" />
         </el-main>
     </el-container>
 </template>
 
 <script>
+import { userAPI } from '@/api';
+
 /**
  * 管理后台布局组件
  * 继承MainLayout的视觉风格，采用顶部导航布局
  */
 export default {
     name: 'AdminLayout',
+    /**
+     * 组件创建生命周期钩子
+     * 初始化时加载数据
+     */
+    async created() {
+        await this.fetchData()
+    },
     computed: {
-        // 获取当前路由匹配记录生成面包屑导航
+        /**
+         * 计算属性：生成面包屑导航数据
+         * @returns {Array} 包含当前路由元信息的匹配记录数组
+         */
         breadcrumbs() {
             return this.$route.matched.filter(
                 route => route.meta && route.meta.title
             )
         }
     },
+    // 移除冗余的watch监听
+    // 数据更新已通过props传递到子组件
     data() {
         return {
             adminNavItems: [
@@ -49,7 +63,25 @@ export default {
                 { title: '用户管理', path: '/admin/users' },
                 { title: '商品管理', path: '/admin/products' },
                 { title: '返回前台', path: '/' }
-            ]
+            ],
+            userListData: [],
+            productsData: []
+        }
+    },
+    methods: {
+        /**
+         * 获取管理后台所需基础数据
+         * 包括用户列表数据（已实现）和商品数据（待实现）
+         */
+        async fetchData() {
+            try {
+                const res = await userAPI.getAllUsers();
+                // 修改后（使用新数组引用）
+                this.userListData = [...res.data]; // 强制触发响应式更新
+            } catch (error) {
+                this.$message.error('用户数据获取失败');
+            }
+            // TODO: 商品数据获取
         }
     }
 }

@@ -201,12 +201,14 @@ export default {
 }
 
 .filter-card {
-    margin-bottom: 16px;
-    border: 1px solid #e4e7ed;
+    margin-bottom: 20px;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .el-table {
-    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .el-table__header th {
@@ -224,6 +226,10 @@ export default {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+}
+
+.search-btn {
+    padding: 8px 16px;
 }
 
 .action-buttons {

@@ -5,8 +5,8 @@
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
                 <el-row :gutter="24">
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
-                        <el-form-item label="搜索条件" class="form-item-extend">
-                            <el-input v-model="searchKey" placeholder="用户名/手机号/ID" clearable
+                        <el-form-item label="用户搜索" class="form-item-extend">
+                            <el-input v-model="searchKey" placeholder="用户名称/ID" clearable
                                 @keyup.enter.native="handleSearch" style="width: 100%">
                                 <template #prefix>
                                     <el-icon>
@@ -21,9 +21,9 @@
                         <el-form-item label="用户状态" class="form-item-extend">
                             <el-select v-model="filterStatus" placeholder="全部用户" clearable style="width: 100%"
                                 class="wide-dropdown">
-                                <el-option label=" 待审核" value="0" />
+                                <el-option label="待审核" value="0" />
                                 <el-option label="已通过" value="1" />
-                                <el-option label="已禁用" value="2" />
+                                <el-option label="已驳回" value="2" />
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -61,10 +61,7 @@
                             @click="handleApprove(row.id)">
                             通过
                         </el-button>
-                        <el-button v-if="row.status === 1" type="danger" link size="small"
-                            @click="handleDisable(row.id)">
-                            忽略
-                        </el-button>
+
                         <el-button type="info" link size="small" @click="showDetail(row)">
                             详情
                         </el-button>
@@ -89,67 +86,107 @@ import DateUtil from '@/utils/dateUtil.js';
 
 export default {
     name: 'UserManagement',
-    created() {
-        this.fetchUsers()
-    },
-    data() {
-        return {
-            loading: false,
-            searchKey: '',
-            filterStatus: '',
-            currentPage: 1,
-            pageSize: 10,
-            total: 0,
-            userList: [], // 用于显示的数据
-            userListData: [], // 用于存储原始数据
+    // 组件接收的用户列表数据（父组件传递）
+    props: {
+        userListData: {
+            type: Array,
+            required: true,
+            default: () => [],
+            description: '父组件传递的原始用户列表数据'
         }
     },
+
+    mounted() {
+        this.fetchUsers(); // 组件挂载时加载用户数据
+    },
+
+    // 监听用户数据变化，触发重新加载
+    watch: {
+        userListData: {
+            handler() { this.fetchUsers() },
+            deep: true // 保持深度监听
+        }
+    },
+
+    // 组件状态管理
+    data() {
+        return {
+            loading: false, // 加载状态
+            searchKey: '', // 搜索关键字
+            filterStatus: '', // 状态筛选条件
+            currentPage: 1, // 当前页码
+            pageSize: 10, // 每页显示数量
+            total: 0, // 总数据量
+            userList: [], // 实际显示的分页数据
+        }
+    },
+
+    // 业务方法
     methods: {
-        async fetchUsers() {
+        /**
+         * 格式化原始数据并执行分页逻辑
+         * @param {Array} data - 父组件传递的原始用户数据
+         */
+        paginateData(data) {
+            // 格式化时间字段并筛选需要展示的字段
+            const formattedData = data.map(user => ({
+                id: user.id,
+                username: user.username,
+                phone: user.phone,
+                registerTime: DateUtil.formatCN(user.createdAt),
+                status: user.status
+            }));
+
+            // 更新总数据量
+            this.total = formattedData.length;
+
+            // 执行分页切片（当前页数据）
+            this.userList = formattedData.slice(
+                (this.currentPage - 1) * this.pageSize,
+                this.currentPage * this.pageSize
+            );
+        },
+
+        /**
+         * 加载当前页用户数据（核心分页逻辑触发）
+         */
+        fetchUsers() {
             this.loading = true
             try {
-                // 获取原始数据
-                this.userListData = await userAPI.getAllUsers();
-                this.userList = this.userListData.data;
-                // 数据格式转换
-                const formattedData = this.userListData.data.map(user => ({
-                    id: user.id,
-                    username: user.username,
-                    phone: user.phone,
-                    registerTime: DateUtil.formatCN(user.createdAt),
-                    status: user.status
-                }));
-
-                // 分页处理
-                this.total = formattedData.length;
-                /**
-                 * slice方法用于从数组中提取索引内的元素。
-                 * - this.pageSize：每页显示的数量。
-                 * - this.currentPage：当前页码。
-                 */
-                this.userList = formattedData.slice(
-                    (this.currentPage - 1) * this.pageSize,
-                    this.currentPage * this.pageSize
-                );
-            } catch (error) {
-                console.error('数据获取失败:', error);
-                this.$message.error('数据加载失败');
+                this.paginateData(this.userListData) // 调用格式化方法并更新数据
             } finally {
                 this.loading = false
             }
         },
+        /**
+         * 处理每页显示数量变化
+         * @param {number} val - 新的每页显示数量
+         */
         handleSizeChange(val) {
             this.pageSize = val
             this.fetchUsers()
+            this.$nextTick(() => this.$refs.userTable?.doLayout?.());
         },
+        /**
+         * 处理当前页码变化
+         * @param {number} val - 新的当前页码
+         */
         handleCurrentChange(val) {
             this.currentPage = val
             this.fetchUsers()
+            this.$nextTick(() => this.$refs.userTable?.doLayout?.());
         },
+        /**
+         * 触发搜索操作（重置页码并重新加载数据）
+         */
         handleSearch() {
             this.currentPage = 1
             this.fetchUsers()
+            this.$nextTick(() => this.$refs.userTable?.doLayout?.());
         },
+        /**
+         * 重置搜索条件并触发搜索
+         */
         resetSearch() {
             this.searchKey = ''
             this.filterStatus = ''
@@ -163,28 +200,30 @@ export default {
             const map = { 0: '待审核', 1: '已通过', 2: '已禁用' }
             return map[status] || '未知状态'
         },
+        /**
+         * 处理用户通过审核操作
+         * @param {string} id - 需要通过审核的用户ID
+         */
         handleApprove(id) {
             this.$confirm('确定要通过该用户吗?', '提示', {
                 type: 'warning'
             }).then(() => {
                 userAPI.passUser(id)
-                this.fetchUsers()
+                this.userListData = this.userListData.map(user => {
+                    if (user.id === id) {
+                        user.status = 1; // 更新状态为通过
+                    }
+                    return user;
+                })
                 this.$message.success('操作成功')
+                this.fetchUsers()
             })
         },
-        handleDisable(id) {
-            this.$confirm('确定要禁用该用户吗?', '提示', {
-                type: 'warning'
-            }).then(() => {
-                // 实际这里应该调用API
-                const index = this.userListData.findIndex(user => user.id === id)
-                if (index !== -1) {
-                    this.userListData[index].status = 2
-                }
-                this.fetchUsers()
-                this.$message.success('操作成功')
-            })
-        },
+
+        /**
+         * 显示用户详细信息
+         * @param {Object} row - 当前行的用户数据对象
+         */
         showDetail(row) {
             this.$alert(`用户ID: ${row.id}<br>用户名: ${row.username}<br>手机号: ${row.phone}<br>注册时间: ${row.registerTime}`,
                 '用户详情', {
