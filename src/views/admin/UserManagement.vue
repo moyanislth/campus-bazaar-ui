@@ -1,12 +1,48 @@
 <template>
     <div class="user-management">
+        <!-- 用户详情面板 -->
+        <div class="detail-panel" v-show="showDetailPanel">
+            <div class="panel-header">
+                <h3>{{ detailData.username || '用户详情' }}</h3>
+                <el-icon class="close-icon" @click="showDetailPanel = false">
+                    <Close />
+                </el-icon>
+            </div>
+            <el-skeleton :loading="detailLoading" :rows="6" animated>
+                <div class="panel-content">
+                    <el-row :gutter="20">
+                        <el-col :span="12">
+                            <el-descriptions title="基本信息" :column="1" border>
+                                <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="用户名">{{ detailData.username || '-'
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="手机号">{{ detailData.phone || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="电子邮箱">{{ detailData.email || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="性别">{{ detailData.gender || '-' }}</el-descriptions-item>
+                            </el-descriptions>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-descriptions title="账户信息" :column="1" border>
+                                <el-descriptions-item label="角色类型">{{ detailData.role || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}</el-descriptions-item>
+                                <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-'
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="注册时间">{{ detailData.createTime || '-'
+                                }}</el-descriptions-item>
+                            </el-descriptions>
+                        </el-col>
+                    </el-row>
+                </div>
+            </el-skeleton>
+        </div>
         <!-- 搜索和筛选区域 -->
         <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
                 <el-row :gutter="24">
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
                         <el-form-item label="用户搜索" class="form-item-extend">
-                            <el-input v-model="searchKey" placeholder="用户名称/ID" clearable
+                            <el-input v-model="filterForm.searchKey" placeholder="用户名称" clearable
                                 @keyup.enter.native="handleSearch" style="width: 100%">
                                 <template #prefix>
                                     <el-icon>
@@ -19,11 +55,10 @@
 
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
                         <el-form-item label="用户状态" class="form-item-extend">
-                            <el-select v-model="filterStatus" placeholder="全部用户" clearable style="width: 100%"
-                                class="wide-dropdown">
+                            <el-select v-model="filterForm.filterStatus" placeholder="全部用户" clearable
+                                style="width: 100%" class="wide-dropdown">
                                 <el-option label="待审核" value="0" />
                                 <el-option label="已通过" value="1" />
-                                <el-option label="已驳回" value="2" />
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -62,7 +97,7 @@
                             通过
                         </el-button>
 
-                        <el-button type="info" link size="small" @click="showDetail(row)">
+                        <el-button type="info" link size="small" @click="showDetail(row.id)">
                             详情
                         </el-button>
                     </div>
@@ -81,39 +116,43 @@
 
 <script>
 import { userAPI } from '@/api'
-import { Search } from '@element-plus/icons-vue'
+import { Search, Close } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import DateUtil from '@/utils/dateUtil.js';
 
 export default {
     name: 'UserManagement',
-    // 组件接收的用户列表数据（父组件传递）
-    props: {
-        userListData: {
-            type: Array,
-            required: true,
-            default: () => [],
-            description: '父组件传递的原始用户列表数据'
-        }
-    },
-
+    components: { Search },
     mounted() {
-        this.fetchUsers(); // 组件挂载时加载用户数据
+        this.fetchUsers() // 页面加载时立即加载用户数据
     },
-
-    // 监听用户数据变化，触发重新加载
-    watch: {
-        userListData: {
-            handler() { this.fetchUsers() },
-            deep: true // 保持深度监听
-        }
-    },
-
     // 组件状态管理
     data() {
         return {
+            // 详情面板状态
+            showDetailPanel: false,
+            detailLoading: false,
+            detailData: {
+                id: '',
+                username: '',
+                role: '',
+                status: '',
+                phone: '',
+                email: '',
+                city: '',
+                gender: '',
+                bankAccount: '',
+                createTime: '',
+
+                // 当role值为1时，显示的额外字段
+                license_img: '', // 新增字段：许可证图片
+                id_card_img: '', // 新增字段：身份证图片
+            },
+            filterForm: {
+                searchKey: '',
+                filterStatus: ''
+            },
             loading: false, // 加载状态
-            searchKey: '', // 搜索关键字
-            filterStatus: '', // 状态筛选条件
             currentPage: 1, // 当前页码
             pageSize: 10, // 每页显示数量
             total: 0, // 总数据量
@@ -123,6 +162,34 @@ export default {
 
     // 业务方法
     methods: {
+        // 获取用户详情
+        async showDetail(userId) {
+            this.detailLoading = true;
+            try {
+                const response = await userAPI.getUser(userId);
+                const data = response.data;
+                this.detailData = {
+                    id: data.id,
+                    username: data.username,
+                    phone: data.phone,
+                    email: data.email,
+                    gender: data.gender === 1 ? '男' : data.gender === 2 ? '女' : '未知',
+                    role: data.role === 1 ? '商户' : data.role === 0 ? '普通用户' : data.role === 2 ? '管理员' : '未知角色',
+                    status: data.status === 0 ? '待审核' : data.status === 1 ? '已通过' : data.status === 2 ? '已禁用' : '未知状态',
+                    city: data.city,
+                    bankAccount: data.bankAccount
+                        .replace(/(\d{4})(\d+)(\d{4})/, (_, prefix, middle, suffix) => `${prefix} **** **** ${suffix}`)
+                        .replace(/(\d{4})(?=\d)/g, '$1 '), // 格式化显示
+                    createTime: DateUtil.formatCN(data.createdAt),
+                };
+
+                this.showDetailPanel = true;
+            } catch (error) {
+                ElMessage.error('详情加载失败');
+            } finally {
+                this.detailLoading = false;
+            }
+        },
         /**
          * 格式化原始数据并执行分页逻辑
          * @param {Array} data - 父组件传递的原始用户数据
@@ -150,10 +217,11 @@ export default {
         /**
          * 加载当前页用户数据（核心分页逻辑触发）
          */
-        fetchUsers() {
+        async fetchUsers() {
             this.loading = true
             try {
-                this.paginateData(this.userListData) // 调用格式化方法并更新数据
+                const userListData = await userAPI.getAllUsers()
+                this.paginateData(userListData.data) // 调用格式化方法并更新数据
             } finally {
                 this.loading = false
             }
@@ -188,8 +256,8 @@ export default {
          * 重置搜索条件并触发搜索
          */
         resetSearch() {
-            this.searchKey = ''
-            this.filterStatus = ''
+            this.filterForm.searchKey = ''
+            this.filterForm.filterStatus = ''
             this.handleSearch()
         },
         statusTagType(status) {
@@ -209,25 +277,10 @@ export default {
                 type: 'warning'
             }).then(() => {
                 userAPI.passUser(id)
-                this.userListData = this.userListData.map(user => {
-                    if (user.id === id) {
-                        user.status = 1; // 更新状态为通过
-                    }
-                    return user;
-                })
+                    .then(() => {
+                        this.fetchUsers() // 刷新数据
+                    })
                 this.$message.success('操作成功')
-                this.fetchUsers()
-            })
-        },
-
-        /**
-         * 显示用户详细信息
-         * @param {Object} row - 当前行的用户数据对象
-         */
-        showDetail(row) {
-            this.$alert(`用户ID: ${row.id}<br>用户名: ${row.username}<br>手机号: ${row.phone}<br>注册时间: ${row.registerTime}`,
-                '用户详情', {
-                dangerouslyUseHTMLString: true
             })
         }
     }
@@ -235,6 +288,90 @@ export default {
 </script>
 
 <style scoped>
+/* 详情面板样式 */
+.detail-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    background: #fff;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+    border-radius: 4px;
+    z-index: 2000;
+
+    .panel-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #ebeef5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            color: #303133;
+            font-size: 16px;
+        }
+
+        .close-icon {
+            cursor: pointer;
+            color: #909399;
+
+            &:hover {
+                color: #409eff;
+            }
+        }
+    }
+
+    .panel-content {
+        padding: 20px;
+
+        .detail-item {
+            margin-bottom: 12px;
+
+            label {
+                color: #909399;
+                margin-right: 10px;
+            }
+        }
+    }
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-icon {
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.close-icon:hover {
+    color: var(--el-color-primary);
+}
+
+.detail-item {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+detail-item label {
+    color: #666;
+    display: block;
+    margin-bottom: 5px;
+}
+
+detail-item span {
+    font-weight: 500;
+    word-break: break-word;
+}
+
 .user-management {
     padding: 20px;
 

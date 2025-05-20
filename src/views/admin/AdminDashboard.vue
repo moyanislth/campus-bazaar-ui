@@ -28,14 +28,15 @@
 </template>
 
 <script>
+import { fetchData } from '@/api/admin'
 /**
  * 管理仪表盘组件
  * 展示关键统计指标和快捷操作入口
  */
 export default {
     name: 'AdminDashboard',
-    created() {
-        this.fetchDashboardStats()
+    mounted() {
+        this.initData();
     },
     methods: {
         /**
@@ -44,17 +45,36 @@ export default {
          * - 待审核用户数
          * - 待审核商品数
          */
+        async initData() {
+            try {
+                const { users, products } = await fetchData();
+                this.userListData = users;
+                this.productsData = products;
+
+                if (this.userListData?.length && this.productsData?.length) {
+                    this.fetchDashboardStats();
+                }
+
+            } catch (e) {
+                console.error('数据初始化失败:', e);
+                this.$message.error(e.message || '数据加载失败');
+            }
+        },
+
+        /**
+         * 获取仪表盘统计数据
+         * 需要确保在userListData和productsData完成加载后执行
+         */
         async fetchDashboardStats() {
             try {
-                const response = await this.$axios.get('/api/admin/dashboard-stats')
                 this.statsData = {
-                    totalUsers: response.data.total_users,
-                    pendingUsers: response.data.pending_users,
-                    pendingProducts: response.data.pending_products
-                }
+                    totalUsers: this.userListData?.length || 0,
+                    pendingUsers: this.userListData?.filter(user => user.status === 0).length || 0,
+                    pendingProducts: this.productsData?.filter(product => product.status === 0).length || 0
+                };
             } catch (error) {
-                console.error('数据获取失败:', error)
-                this.$message.error('统计数据加载失败')
+                console.error('统计数据获取失败:', error);
+                this.statsData = { totalUsers: 0, pendingUsers: 0, pendingProducts: 0 };
             }
         }
     },

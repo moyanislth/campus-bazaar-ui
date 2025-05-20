@@ -12,6 +12,19 @@ const getAllUsers = () => {
 }
 
 /**
+ * 获取特定用户信息接口
+ * @returns {Promise} 用户信息请求结果
+ */
+const getUser = (userId) => {
+  const id = userId;
+  return request({
+    method: 'get',
+    url: '/api/user/getUserById',
+    params: { id },
+  })
+}
+
+/**
  * 通过注册接口
  * @param {String} userId 用户ID
  * @returns {Promise} 审核结果
@@ -102,4 +115,4 @@ const checkCaptcha = (code, token) => {
 
 
 
-export { getAllUsers, register, login, getCaptcha, checkCaptcha, passUser };
+export { getUser,getAllUsers, register, login, getCaptcha, checkCaptcha, passUser };
