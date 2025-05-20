@@ -3,7 +3,7 @@
         <!-- 用户详情面板 -->
         <div class="detail-panel" v-show="showDetailPanel">
             <div class="panel-header">
-                <h3>{{ detailData.username || '用户详情' }}</h3>
+                <h3>{{ '用户详情' }}</h3>
                 <el-icon class="close-icon" @click="showDetailPanel = false">
                     <Close />
                 </el-icon>
@@ -15,7 +15,7 @@
                             <el-descriptions title="基本信息" :column="1" border>
                                 <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="用户名">{{ detailData.username || '-'
-                                }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                 <el-descriptions-item label="手机号">{{ detailData.phone || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="电子邮箱">{{ detailData.email || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="性别">{{ detailData.gender || '-' }}</el-descriptions-item>
@@ -27,9 +27,9 @@
                                 <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-'
-                                }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                 <el-descriptions-item label="注册时间">{{ detailData.createTime || '-'
-                                }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                             </el-descriptions>
                         </el-col>
                     </el-row>
@@ -288,29 +288,38 @@ export default {
 </script>
 
 <style scoped>
-/* 详情面板样式 */
+/* 现代风格面板 */
 .detail-panel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 800px;
-    background: #fff;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
-    border-radius: 4px;
+    width: min(90%, 860px);
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: var(--el-border-radius-round);
+    box-shadow: var(--el-box-shadow-light);
     z-index: 2000;
+    display: flex;
+    flex-direction: column;
 
     .panel-header {
-        padding: 15px 20px;
-        border-bottom: 1px solid #ebeef5;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--el-border-color-light);
+        background: var(--el-fill-color-light);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-radius: var(--el-border-radius-round) var(--el-border-radius-round) 0 0;
 
         h3 {
             margin: 0;
-            color: #303133;
-            font-size: 16px;
+            color: var(--el-text-color-primary);
+            font-size: var(--el-font-size-extra-large);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .close-icon {
@@ -324,7 +333,21 @@ export default {
     }
 
     .panel-content {
-        padding: 20px;
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+
+        @media (max-height: 600px) {
+            max-height: 60vh;
+        }
+
+        .el-descriptions {
+            --el-descriptions-table-border: 1px solid var(--el-border-color-lighter);
+
+            :deep(.el-descriptions__body) {
+                background: transparent;
+            }
+        }
 
         .detail-item {
             margin-bottom: 12px;
@@ -334,6 +357,19 @@ export default {
                 margin-right: 10px;
             }
         }
+    }
+
+    /* 苹果式阴影 */
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    /* 标题字体优化 */
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: -0.4px;
+
+    /* 标签文字增强 */
+    .el-descriptions-item__label {
+        font-weight: 450;
+        letter-spacing: -0.2px;
     }
 }
 
