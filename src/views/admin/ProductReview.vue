@@ -1,5 +1,75 @@
 <template>
     <div class="product-review">
+        <!-- 商品详情面板 -->
+        <div class="detail-panel" v-show="showDetailPanel">
+            <el-dialog v-model="showDetailPanel" :show-close="false" width="860px" modal
+                custom-class="product-detail-dialog" destroy-on-close>
+                <template #header>
+                    <div>
+                        <h3>{{ '商品详情' }}</h3>
+                    </div>
+                </template>
+                <el-skeleton :loading="detailLoading" :rows="6" animated>
+                    <div class="panel-content">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-descriptions title="基本信息" :column="1" border>
+                                    <el-descriptions-item label="商品ID">{{ detailData.id || '-' }}</el-descriptions-item>
+                                    <el-descriptions-item label="商品名称">{{ detailData.title || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="分类">{{ detailData.category || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="价格">¥{{ detailData.price || '-'
+                                    }}</el-descriptions-item>
+                                </el-descriptions>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-descriptions title="补充信息" :column="1" border>
+                                    <el-descriptions-item label="库存">{{ detailData.stock || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="上架状态">{{ detailData.statusText || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="创建时间">{{ detailData.createTime || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="商品描述">{{ detailData.description || '-'
+                                    }}</el-descriptions-item>
+                                </el-descriptions>
+                            </el-col>
+                        </el-row>
+
+                        <!-- 商品图片预览 -->
+                        <div class="image-preview-group" v-if="detailData.images?.length">
+                            <h4>商品图片</h4>
+                            <div class="preview-container">
+                                <el-image v-for="(img, index) in detailData.images" :key="index" :src="img" fit="cover"
+                                    class="preview-image" :preview-src-list="detailData.images" :initial-index="index"
+                                    hide-on-click-modal>
+                                    <template #error>
+                                        <div class="image-error">
+                                            图片加载失败
+                                        </div>
+                                    </template>
+                                </el-image>
+                            </div>
+                        </div>
+                    </div>
+                </el-skeleton>
+            </el-dialog>
+        </div>
+
+        <!-- 图片预览对话框 -->
+        <el-dialog v-model="imageDialogVisible" width="70%" title="商品图片预览" center>
+            <div class="image-preview-container">
+                <el-image :src="currentImage" fit="contain" style="max-width: 100%; max-height: 70vh"
+                    :preview-src-list="[currentImage]">
+                    <template #error>
+                        <div class="image-error">
+                            图片加载失败
+                        </div>
+                    </template>
+                </el-image>
+            </div>
+        </el-dialog>
         <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form">
                 <el-row :gutter="24">
@@ -44,9 +114,9 @@
             <el-table-column prop="id" label="商品ID" width="140" align="center" />
             <el-table-column prop="title" label="商品名称" min-width="180" />
             <el-table-column prop="price" label="价格" width="160" align="center" />
-            <el-table-column prop="status" label="审核状态" width="140" align="center">
+            <el-table-column prop="review_status" label="审核状态" width="140" align="center">
                 <template #default="{ row }">
-                    <el-tag :type="statusTagType(row.status)" size="small">
+                    <el-tag :type="statusTagType(row.review_status)" size="small">
                         {{ statusText(row.status) }}
                     </el-tag>
                 </template>
@@ -77,119 +147,183 @@
 </template>
 
 <script>
+import { Search } from '@element-plus/icons-vue';
+import { goodsAPI } from '@/api';
+
+// 状态映射常量
+const STATUS_MAP = {
+    0: { text: '待审核', type: 'warning' },
+    1: { text: '已通过', type: 'success' },
+    2: { text: '已驳回', type: 'danger' }
+};
+
 /**
  * 商品审核组件 - 重构版
  * 采用与用户管理一致的UI规范和数据加载模式
  */
 export default {
     name: 'ProductReview',
+    components: { Search },
     data() {
         return {
+            // 图片预览相关状态
+            imageDialogVisible: false,
+            currentImage: '',
+
+            // 详情面板状态
+            showDetailPanel: false,
+            detailLoading: false,
+            detailData: {
+                id: '',
+                title: '',
+                price: '',
+                category: '',
+                stock: '',
+                description: '',
+                statusText: '',
+                createTime: '',
+                images: []
+            },
+
             loading: false,
             searchKey: '',
             filterStatus: '',
             currentPage: 1,
             pageSize: 10,
             total: 0,
-            productList: [],
-            mockData: [
-                {
-                    id: 2001,
-                    title: '二手笔记本电脑',
-                    price: 2999,
-                    status: 0,
-                    createTime: '2024-03-01 10:00'
-                }
-            ]
+            // 商品列表数据
+            productList: []
         }
     },
     created() {
-        this.fetchProducts()
+        this.fetchProducts();
+        // 如果需要使用 markRaw，可以这样使用
+        // this.someReactiveProperty = markRaw(someObject);
     },
     methods: {
+        /** 获取商品详情 */
+        async showDetail(productId) {
+            this.detailLoading = true;
+            try {
+                const response = await goodsAPI.getProductById(productId);
+                const data = response.data;
+                this.detailData = {
+                    id: data.id,
+                    title: data.title,
+                    price: '¥' + data.price.toFixed(2),
+                    category: data.categoryName,
+                    stock: data.stock,
+                    description: data.description,
+                    statusText: this.statusText(data.review_status),
+                    // createTime: DateUtil.formatCN(data.createTime),
+                    // images: data.images.map(img => `data:image/jpeg;base64,${img}`)
+                };
+                this.showDetailPanel = true;
+            } catch (error) {
+                console.error('获取商品详情失败:', error);
+                this.$message.error('获取详情失败');
+            } finally {
+                this.detailLoading = false;
+            }
+        },
+
+        /** 预览图片 */
+        previewImage(imageUrl) {
+            if (!imageUrl) {
+                this.$message.warning('图片路径无效');
+                return;
+            }
+            this.currentImage = imageUrl;
+            this.imageDialogVisible = true;
+        },
+
         /** 获取商品数据 */
         async fetchProducts() {
-            this.loading = true
+            this.loading = true;
             try {
-                await new Promise(resolve => setTimeout(resolve, 500))
+                const response = await goodsAPI.getProducts({
+                    current_page: this.currentPage,
+                    per_page: this.pageSize,
+                });
+                const data = response.data;
 
-                const filteredData = this.mockData.filter(item => {
-                    const searchLower = this.searchKey.toLowerCase()
-                    return (
-                        String(item.id).includes(this.searchKey) ||
-                        item.title.toLowerCase().includes(searchLower)
-                    ) && (
-                            this.filterStatus === '' ||
-                            String(item.status) === this.filterStatus
-                        )
-                })
+                this.pagination.total = data.total_records;
+                this.productList = data.records.map
 
-                this.total = filteredData.length
-                this.productList = filteredData.slice(
-                    (this.currentPage - 1) * this.pageSize,
-                    this.currentPage * this.pageSize
-                )
+
+
+            } catch (error) {
+                console.error('获取商品列表失败:', error);
+                this.$message.error('数据加载失败');
             } finally {
-                this.loading = false
+                this.loading = false;
             }
         },
 
         /** 处理搜索 */
         handleSearch() {
-            this.currentPage = 1
-            this.fetchProducts()
+            this.currentPage = 1;
+            this.fetchProducts();
         },
 
         /** 重置搜索条件 */
         resetSearch() {
-            this.searchKey = ''
-            this.filterStatus = ''
-            this.handleSearch()
+            this.searchKey = '';
+            this.filterStatus = '';
+            this.handleSearch();
         },
 
         /** 状态标签样式 */
         statusTagType(status) {
-            const map = { 0: 'warning', 1: 'success', 2: 'danger' }
-            return map[status] || ''
+            return STATUS_MAP[status]?.type || '';
         },
 
         /** 状态文本映射 */
         statusText(status) {
-            const map = { 0: '待审核', 1: '已通过', 2: '已驳回' }
-            return map[status] || '未知状态'
+            return STATUS_MAP[status]?.text || '未知状态';
         },
 
         /** 审核通过 */
-        handleApprove(row) {
-            this.$confirm('确定要通过该商品吗?', '提示', {
-                type: 'warning'
-            }).then(() => {
-                const index = this.mockData.findIndex(p => p.id === row.id)
-                if (index !== -1) this.mockData[index].status = 1
-                this.fetchProducts()
-                this.$message.success('操作成功')
-            })
+        async handleApprove(row) {
+            try {
+                await this.$confirm('确定要通过该商品吗?', '提示', {
+                    type: 'warning'
+                });
+
+                // 这里应该调用API而不是修改mockData
+                await goodsAPI.approveProduct(row.id);
+                this.$message.success('操作成功');
+                this.fetchProducts();
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('审核通过失败:', error);
+                    this.$message.error('操作失败');
+                }
+            }
         },
 
         /** 审核驳回 */
-        handleReject(row) {
-            this.$confirm('确定要驳回该商品吗?', '提示', {
-                type: 'warning'
-            }).then(() => {
-                const index = this.mockData.findIndex(p => p.id === row.id)
-                if (index !== -1) this.mockData[index].status = 2
-                this.fetchProducts()
-                this.$message.success('操作成功')
-            })
+        async handleReject(row) {
+            try {
+                await this.$confirm('确定要驳回该商品吗?', '提示', {
+                    type: 'warning'
+                });
+
+                // 这里应该调用API而不是修改mockData
+                await goodsAPI.rejectProduct(row.id);
+                this.$message.success('操作成功');
+                this.fetchProducts();
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('审核驳回失败:', error);
+                    this.$message.error('操作失败');
+                }
+            }
         },
 
         /** 查看详情 */
         handleDetail(row) {
-            this.$alert(
-                `商品ID: ${row.id}<br>名称: ${row.title}<br>价格: ¥${row.price}<br>提交时间: ${row.createTime}`,
-                '商品详情',
-                { dangerouslyUseHTMLString: true }
-            )
+            this.showDetail(row.id);
         }
     }
 }
@@ -235,9 +369,39 @@ export default {
 .action-buttons {
     display: flex;
     gap: 8px;
+    justify-content: center;
 }
 
 .wide-dropdown {
     min-width: 240px !important;
+}
+
+.image-preview-group {
+    margin-top: 20px;
+}
+
+.preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.preview-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 4px;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.image-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #f5f5f5;
+    color: #999;
 }
 </style>

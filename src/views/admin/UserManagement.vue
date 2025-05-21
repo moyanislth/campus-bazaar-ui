@@ -16,13 +16,13 @@
                                 <el-descriptions title="基本信息" :column="1" border>
                                     <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
                                     <el-descriptions-item label="用户名">{{ detailData.username || '-'
-                                        }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                     <el-descriptions-item label="手机号">{{ detailData.phone || '-'
-                                        }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                     <el-descriptions-item label="电子邮箱">{{ detailData.email || '-'
-                                        }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                     <el-descriptions-item label="性别">{{ detailData.gender || '-'
-                                        }}</el-descriptions-item>
+                                    }}</el-descriptions-item>
                                 </el-descriptions>
                             </el-col>
                             <el-col :span="12">
@@ -138,6 +138,11 @@
                         <el-button v-if="row.status === 0" type="primary" link size="small"
                             @click="handleApprove(row.id)">
                             通过
+                        </el-button>
+
+                        <el-button v-if="row.status === 2" type="primary" link size="small"
+                            @click="handleApprove(row.id)">
+                            解封
                         </el-button>
 
                         <el-button v-if="row.status != 2" type="danger" link size="small" @click="handleReject(row.id)">
@@ -366,14 +371,41 @@ export default {
         /**
          * 触发搜索操作（重置页码并重新加载数据）
          */
-        handleSearch() {
-            this.currentPage = 1
-            this.fetchUsers()
-            this.$nextTick(() => this.$refs.userTable?.doLayout?.());
-        },
         /**
-         * 重置搜索条件并触发搜索
+         * 处理用户搜索
+         * 当搜索条件和状态均为默认值时查询全部用户
          */
+        async handleSearch() {
+            if (!this.filterForm.searchKey && !this.filterForm.filterStatus) {
+                await this.fetchUsers();
+            } else {
+                await this.searchUsers();
+            }
+        },
+
+        /**
+         * 新建组合搜索方法
+         * 根据搜索关键词和状态进行联合查询
+         */
+        async searchUsers() {
+            try {
+                this.loading = true;
+                const params = {
+                    page: this.currentPage,
+                    pageSize: this.pageSize,
+                    keyword: this.filterForm.searchKey || undefined,
+                    status: this.filterForm.filterStatus || undefined
+                };
+                const res = await userAPI.searchUsers(params);
+                this.userList = res.data.list;
+                this.total = res.data.total;
+            } catch (error) {
+                ElMessage.error('搜索失败：' + error.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         resetSearch() {
             this.filterForm.searchKey = ''
             this.filterForm.filterStatus = ''
@@ -500,35 +532,6 @@ h3 {
 
 /* 用户管理主区域 */
 .user-management {
-    background: #f8fafc;
-    min-height: calc(100vh - 60px);
-
-    .filter-card {
-        border: 1px solid var(--el-border-color-light);
-        margin-bottom: 16px;
-
-        :deep(.el-card__body) {
-            padding: 16px 24px;
-        }
-    }
-
-    .data-table {
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-
-        :deep(.el-table__header) th {
-            background-color: var(--el-fill-color-light) !important;
-        }
-    }
-
-    .pagination-container {
-        margin-top: 16px;
-        padding: 16px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
     padding: 20px;
 }
 
