@@ -25,15 +25,15 @@ const getUser = (userId) => {
 }
 
 /**
- * 通过注册接口
+ * 更新用户状态
  * @param {String} userId 用户ID
  * @returns {Promise} 审核结果
  */
-const passUser = (userId) => {
+const updateUserStatusUser = (userId, status) => {
   return request({
     method: 'Patch',
     url: '/api/user/updateUserStatus',
-    data: { userId },
+    data: { userId, status },
   })
 }
 
@@ -113,6 +113,17 @@ const checkCaptcha = (code, token) => {
   })
 }
 
+/**
+ * 获取用户证件信息
+ * @param {number} userId - 用户ID
+ * @returns {Promise} 包含状态码和图片数据的响应
+ */
+const getUserCredentials = async (userId) => {
+  return await request({
+    url: `/api/merchant/getMerchantCredentials`,
+    method: 'GET',
+    params: { userId },
+  });
+};
 
-
-export { getUser,getAllUsers, register, login, getCaptcha, checkCaptcha, passUser };
+export { getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };

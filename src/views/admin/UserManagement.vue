@@ -1,13 +1,14 @@
 <template>
     <div class="user-management">
+
         <!-- 用户详情面板 -->
-        <div class="detail-panel" v-show="showDetailPanel">
-            <div class="panel-header">
-                <h3>{{ '用户详情' }}</h3>
-                <el-icon class="close-icon" @click="showDetailPanel = false">
-                    <Close />
-                </el-icon>
-            </div>
+        <el-dialog v-model="showDetailPanel" :show-close="false" width="860px" modal custom-class="user-detail-dialog"
+            destroy-on-close>
+            <template #header>
+                <div>
+                    <h3>{{ '用户详情' }}</h3>
+                </div>
+            </template>
             <el-skeleton :loading="detailLoading" :rows="6" animated>
                 <div class="panel-content">
                     <el-row :gutter="20">
@@ -15,27 +16,52 @@
                             <el-descriptions title="基本信息" :column="1" border>
                                 <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
                                 <el-descriptions-item label="用户名">{{ detailData.username || '-'
-                                    }}</el-descriptions-item>
-                                <el-descriptions-item label="手机号">{{ detailData.phone || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="电子邮箱">{{ detailData.email || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="性别">{{ detailData.gender || '-' }}</el-descriptions-item>
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="手机号">{{ detailData.phone || '-'
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="电子邮箱">{{ detailData.email || '-'
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="性别">{{ detailData.gender || '-'
+                                }}</el-descriptions-item>
                             </el-descriptions>
                         </el-col>
                         <el-col :span="12">
                             <el-descriptions title="账户信息" :column="1" border>
-                                <el-descriptions-item label="角色类型">{{ detailData.role || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-'
-                                    }}</el-descriptions-item>
-                                <el-descriptions-item label="注册时间">{{ detailData.createTime || '-'
-                                    }}</el-descriptions-item>
+                                <el-descriptions-item label="角色类型">{{ detailData.role || '-' }}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-' }}
+                                </el-descriptions-item>
+                                <el-descriptions-item label="注册时间">{{ detailData.createTime || '-' }}
+                                </el-descriptions-item>
+
+                                <!-- 商户证件信息 -->
+                                <el-descriptions-item v-if="detailData.role === '商户'" label="证件信息">
+                                    <div class="cert-buttons">
+                                        <el-button type="primary" link @click="viewLicenseImg">
+                                            <el-icon>
+                                                <Picture />
+                                            </el-icon>
+                                            查看许可证
+                                        </el-button>
+                                        <el-button type="primary" link @click="viewIdCardImg">
+                                            <el-icon>
+                                                <Picture />
+                                            </el-icon>
+                                            查看身份证
+                                        </el-button>
+                                    </div>
+                                </el-descriptions-item>
+
                             </el-descriptions>
                         </el-col>
                     </el-row>
                 </div>
             </el-skeleton>
-        </div>
+        </el-dialog>
         <!-- 搜索和筛选区域 -->
         <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
@@ -59,6 +85,7 @@
                                 style="width: 100%" class="wide-dropdown">
                                 <el-option label="待审核" value="0" />
                                 <el-option label="已通过" value="1" />
+                                <el-option label="已封禁" value="2" />
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -97,6 +124,10 @@
                             通过
                         </el-button>
 
+                        <el-button v-if="row.status != 2" type="danger" link size="small" @click="handleReject(row.id)">
+                            封禁
+                        </el-button>
+
                         <el-button type="info" link size="small" @click="showDetail(row.id)">
                             详情
                         </el-button>
@@ -116,13 +147,14 @@
 
 <script>
 import { userAPI } from '@/api'
-import { Search, Close } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
+import ElDialog from 'element-plus/es/components/dialog'
 import { ElMessage } from 'element-plus'
 import DateUtil from '@/utils/dateUtil.js';
 
 export default {
     name: 'UserManagement',
-    components: { Search },
+    components: { Search, [ElDialog.name]: ElDialog },
     mounted() {
         this.fetchUsers() // 页面加载时立即加载用户数据
     },
@@ -162,9 +194,30 @@ export default {
 
     // 业务方法
     methods: {
+        // 获取商户证件信息
+        // 修复证件信息获取逻辑
+        async getCredentials(userId) {
+            const res = await userAPI.getUserCredentials(userId);
+            this.detailData.license_img = res.data.license_img;
+            this.detailData.id_card_img = res.data.id_card_img;
+        },
+
+        // 查看许可证图片
+        viewLicenseImg() {
+            if (this.detailData.license_img) {
+                window.open(this.detailData.license_img, '_blank');
+            }
+        },
+        // 查看身份证图片
+        viewIdCardImg() {
+            if (this.detailData.id_card_img) {
+                window.open(this.detailData.id_card_img, '_blank');
+            }
+        },
         // 获取用户详情
         async showDetail(userId) {
             this.detailLoading = true;
+
             try {
                 const response = await userAPI.getUser(userId);
                 const data = response.data;
@@ -175,13 +228,19 @@ export default {
                     email: data.email,
                     gender: data.gender === 1 ? '男' : data.gender === 2 ? '女' : '未知',
                     role: data.role === 1 ? '商户' : data.role === 0 ? '普通用户' : data.role === 2 ? '管理员' : '未知角色',
-                    status: data.status === 0 ? '待审核' : data.status === 1 ? '已通过' : data.status === 2 ? '已禁用' : '未知状态',
+                    status: data.status === 0 ? '待审核' : data.status === 1 ? '已通过' : data.status === 2 ? '已封禁' : '未知状态',
                     city: data.city,
                     bankAccount: data.bankAccount
                         .replace(/(\d{4})(\d+)(\d{4})/, (_, prefix, middle, suffix) => `${prefix} **** **** ${suffix}`)
                         .replace(/(\d{4})(?=\d)/g, '$1 '), // 格式化显示
                     createTime: DateUtil.formatCN(data.createdAt),
+                    license_img: data.license_img || 'https://dummyimage.com/200x150/f0f0f0/999&text=License',
+                    id_card_img: data.id_card_img || 'https://dummyimage.com/200x150/f0f0f0/999&text=ID+Card',
                 };
+
+                if (this.detailData.role === '商户') {
+                    await this.getCredentials(userId); // 获取商户证件信息
+                }
 
                 this.showDetailPanel = true;
             } catch (error) {
@@ -265,7 +324,7 @@ export default {
             return map[status] || ''
         },
         statusText(status) {
-            const map = { 0: '待审核', 1: '已通过', 2: '已禁用' }
+            const map = { 0: '待审核', 1: '已通过', 2: '已封禁' }
             return map[status] || '未知状态'
         },
         /**
@@ -276,7 +335,22 @@ export default {
             this.$confirm('确定要通过该用户吗?', '提示', {
                 type: 'warning'
             }).then(() => {
-                userAPI.passUser(id)
+                userAPI.updateUserStatusUser(id, 1)
+                    .then(() => {
+                        this.fetchUsers() // 刷新数据
+                    })
+                this.$message.success('操作成功')
+            })
+        },
+        /**
+         * 处理用户封禁操作
+         * @param {string} id - 需要封禁的用户ID
+         */
+        handleReject(id) {
+            this.$confirm('确定要封禁该用户吗?', '提示', {
+                type: 'warning'
+            }).then(() => {
+                userAPI.updateUserStatusUser(id, 2)
                     .then(() => {
                         this.fetchUsers() // 刷新数据
                     })
@@ -285,178 +359,162 @@ export default {
         }
     }
 }
+
 </script>
 
 <style scoped>
-/* 现代风格面板 */
-.detail-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: min(90%, 860px);
-    background: var(--el-bg-color);
-    border: 1px solid var(--el-border-color-light);
-    border-radius: var(--el-border-radius-round);
-    box-shadow: var(--el-box-shadow-light);
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
+/* 用户详情对话框样式 - 现代圆角设计 */
+.user-detail-dialog {
+    border-radius: 12px;
 
-    .panel-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--el-border-color-light);
-        background: var(--el-fill-color-light);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: var(--el-border-radius-round) var(--el-border-radius-round) 0 0;
-
-        h3 {
-            margin: 0;
-            color: var(--el-text-color-primary);
-            font-size: var(--el-font-size-extra-large);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .close-icon {
-            cursor: pointer;
-            color: #909399;
-
-            &:hover {
-                color: #409eff;
-            }
-        }
+    /* 恢复对话框关闭按钮 */
+    :deep(.el-dialog__header) {
+        padding: 20px;
     }
 
-    .panel-content {
-        padding: 24px;
-        flex: 1;
-        overflow-y: auto;
-
-        @media (max-height: 600px) {
-            max-height: 60vh;
-        }
-
-        .el-descriptions {
-            --el-descriptions-table-border: 1px solid var(--el-border-color-lighter);
-
-            :deep(.el-descriptions__body) {
-                background: transparent;
-            }
-        }
-
-        .detail-item {
-            margin-bottom: 12px;
-
-            label {
-                color: #909399;
-                margin-right: 10px;
-            }
-        }
+    /* 对话框内容区域内边距清零 */
+    :deep(.el-dialog__body) {
+        padding: 0;
     }
+}
 
-    /* 苹果式阴影 */
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-    /* 标题字体优化 */
-    font-size: 21px;
+/* 面板内容区域 */
+.panel-content {
+    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+
+    /* 小屏幕高度适配 */
+    @media (max-height: 600px) {
+        max-height: 60vh;
+    }
+}
+
+/* 标题样式 */
+h3 {
+    margin: 0;
+    color: var(--el-text-color-primary);
+    font-size: var(--el-font-size-extra-large);
     font-weight: 500;
-    letter-spacing: -0.4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-    /* 标签文字增强 */
+/* 描述列表样式 */
+.el-descriptions {
+    --el-descriptions-table-border: 1px solid var(--el-border-color-lighter);
+
+    /* 背景透明 */
+    :deep(.el-descriptions__body) {
+        background: transparent;
+    }
+
+    /* 标签文字样式增强 */
     .el-descriptions-item__label {
         font-weight: 450;
         letter-spacing: -0.2px;
     }
 }
 
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.close-icon {
-    cursor: pointer;
-    padding: 5px;
-    transition: color 0.3s;
-}
-
-.close-icon:hover {
-    color: var(--el-color-primary);
-}
-
+/* 详情项样式 */
 .detail-item {
     margin-bottom: 15px;
     padding: 12px;
     background: #f8f9fa;
     border-radius: 4px;
+
+    /* 标签样式 */
+    label {
+        color: #666;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    /* 内容样式 */
+    span {
+        font-weight: 500;
+        word-break: break-word;
+    }
 }
 
-detail-item label {
-    color: #666;
-    display: block;
-    margin-bottom: 5px;
-}
-
-detail-item span {
-    font-weight: 500;
-    word-break: break-word;
-}
-
+/* 用户管理主区域 */
 .user-management {
     padding: 20px;
-
 }
 
+/* 筛选卡片样式 */
 .filter-card {
     margin-bottom: 20px;
     border: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
+/* 表格样式 */
 .el-table {
     border-radius: 8px;
     overflow: hidden;
+
+    /* 表头样式 */
+    :deep(th.el-table__cell) {
+        background-color: #f8f9fa !important;
+    }
+
+    /* 行悬停效果 */
+    :deep(.el-table__row:hover td) {
+        background-color: #f5f7fa !important;
+    }
+
+    /* 移除内边距 */
+    :deep(.el-table__inner-wrapper::before) {
+        display: none;
+    }
 }
 
-.el-table :deep(th.el-table__cell) {
-    background-color: #f8f9fa !important;
-}
-
-.el-table :deep(.el-table__row:hover td) {
-    background-color: #f5f7fa !important;
-}
-
+/* 分页容器 */
 .pagination-container {
     display: flex;
     justify-content: flex-end;
     margin-top: 20px;
 }
 
+/* 表单操作按钮区域 */
 .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
 }
 
+/* 搜索按钮 */
 .search-btn {
     padding: 8px 16px;
 }
 
-:deep(.el-table__inner-wrapper::before) {
-    display: none;
-}
-
+/* 宽下拉菜单 */
 .wide-dropdown {
     min-width: 240px !important;
 }
 
+/* 扩展表单项 */
 .form-item-extend :deep(.el-form-item__content) {
     flex: 1;
+}
+
+/* 证件查看按钮样式 */
+.cert-buttons {
+    display: flex;
+    gap: 20px;
+    padding: 8px 0;
+
+    .el-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.2s;
+
+        &:hover {
+            color: var(--el-color-primary);
+        }
+    }
 }
 </style>
