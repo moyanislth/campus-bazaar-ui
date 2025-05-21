@@ -1,69 +1,85 @@
 <template>
     <div class="user-management">
-
         <!-- 用户详情面板 -->
-        <el-dialog v-model="showDetailPanel" :show-close="false" width="860px" modal custom-class="user-detail-dialog"
-            destroy-on-close>
-            <template #header>
-                <div>
-                    <h3>{{ '用户详情' }}</h3>
-                </div>
-            </template>
-            <el-skeleton :loading="detailLoading" :rows="6" animated>
-                <div class="panel-content">
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <el-descriptions title="基本信息" :column="1" border>
-                                <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
-                                <el-descriptions-item label="用户名">{{ detailData.username || '-'
-                                }}</el-descriptions-item>
-                                <el-descriptions-item label="手机号">{{ detailData.phone || '-'
-                                }}</el-descriptions-item>
-                                <el-descriptions-item label="电子邮箱">{{ detailData.email || '-'
-                                }}</el-descriptions-item>
-                                <el-descriptions-item label="性别">{{ detailData.gender || '-'
-                                }}</el-descriptions-item>
-                            </el-descriptions>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-descriptions title="账户信息" :column="1" border>
-                                <el-descriptions-item label="角色类型">{{ detailData.role || '-' }}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-' }}
-                                </el-descriptions-item>
-                                <el-descriptions-item label="注册时间">{{ detailData.createTime || '-' }}
-                                </el-descriptions-item>
+        <div class="detail-panel" v-show="showDetailPanel">
+            <el-dialog v-model="showDetailPanel" :show-close="false" width="860px" modal
+                custom-class="user-detail-dialog" destroy-on-close>
+                <template #header>
+                    <div>
+                        <h3>{{ '用户详情' }}</h3>
+                    </div>
+                </template>
+                <el-skeleton :loading="detailLoading" :rows="6" animated>
+                    <div class="panel-content">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-descriptions title="基本信息" :column="1" border>
+                                    <el-descriptions-item label="用户ID">{{ detailData.id || '-' }}</el-descriptions-item>
+                                    <el-descriptions-item label="用户名">{{ detailData.username || '-'
+                                        }}</el-descriptions-item>
+                                    <el-descriptions-item label="手机号">{{ detailData.phone || '-'
+                                        }}</el-descriptions-item>
+                                    <el-descriptions-item label="电子邮箱">{{ detailData.email || '-'
+                                        }}</el-descriptions-item>
+                                    <el-descriptions-item label="性别">{{ detailData.gender || '-'
+                                        }}</el-descriptions-item>
+                                </el-descriptions>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-descriptions title="账户信息" :column="1" border>
+                                    <el-descriptions-item label="角色类型">{{ detailData.role || '-' }}
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="账户状态">{{ detailData.status || '-' }}
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="所在城市">{{ detailData.city || '-' }}
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="银行账户">{{ detailData.bankAccount || '-' }}
+                                    </el-descriptions-item>
+                                    <el-descriptions-item label="注册时间">{{ detailData.createTime || '-' }}
+                                    </el-descriptions-item>
 
-                                <!-- 商户证件信息 -->
-                                <el-descriptions-item v-if="detailData.role === '商户'" label="证件信息">
-                                    <div class="cert-buttons">
-                                        <el-button type="primary" link @click="viewLicenseImg">
-                                            <el-icon>
-                                                <Picture />
-                                            </el-icon>
-                                            查看许可证
-                                        </el-button>
-                                        <el-button type="primary" link @click="viewIdCardImg">
-                                            <el-icon>
-                                                <Picture />
-                                            </el-icon>
-                                            查看身份证
-                                        </el-button>
-                                    </div>
-                                </el-descriptions-item>
+                                    <!-- 商户证件信息 -->
+                                    <el-descriptions-item v-if="detailData.role === '商户'" label="证件信息">
+                                        <div class="cert-buttons">
+                                            <el-button type="primary" link @click="viewLicenseImg">
+                                                <el-icon>
+                                                    <Picture />
+                                                </el-icon>
+                                                查看许可证
+                                            </el-button>
+                                            <el-button type="primary" link @click="viewIdCardImg">
+                                                <el-icon>
+                                                    <Picture />
+                                                </el-icon>
+                                                查看身份证
+                                            </el-button>
+                                        </div>
+                                    </el-descriptions-item>
 
-                            </el-descriptions>
-                        </el-col>
-                    </el-row>
-                </div>
-            </el-skeleton>
+                                </el-descriptions>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </el-skeleton>
+            </el-dialog>
+        </div>
+
+        <el-dialog v-model="imageDialogVisible" width="70%" title="证件预览" center>
+            <!-- 新增图片容器 -->
+            <div class="image-preview-container">
+                <el-image :src="currentImage" fit="contain" style="max-width: 100%; max-height: 70vh"
+                    :preview-src-list="[currentImage]">
+                    <template #error>
+                        <div class="image-error">
+                            图片加载失败
+                        </div>
+                    </template>
+                </el-image>
+            </div>
         </el-dialog>
+
         <!-- 搜索和筛选区域 -->
-        <el-card class="filter-card">
+        <el-card class="filter-card" shadow="never">
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
                 <el-row :gutter="24">
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
@@ -103,7 +119,7 @@
         </el-card>
 
         <!-- 表格区域 -->
-        <el-table v-loading="loading" :data="userList" border style="width: 100%" class="mt-4" stripe
+        <el-table v-loading="loading" :data="userList" border style="width: 100%" class="data-table" stripe
             :header-cell-style="{ background: '#f8f9fa', color: '#606266' }" :cell-style="{ padding: '12px 0' }">
             <el-table-column prop="id" label="用户ID" width="140" align="center" />
             <el-table-column prop="username" label="用户名" min-width="180" />
@@ -147,21 +163,29 @@
 
 <script>
 import { userAPI } from '@/api'
-import { Search } from '@element-plus/icons-vue'
-import ElDialog from 'element-plus/es/components/dialog'
-import { ElMessage } from 'element-plus'
+import { Search, Picture } from '@element-plus/icons-vue'
+import { ElMessage, ElDialog } from 'element-plus'
 import DateUtil from '@/utils/dateUtil.js';
 
 export default {
     name: 'UserManagement',
-    components: { Search, [ElDialog.name]: ElDialog },
+    components: { Search, Picture, ElDialog },
     mounted() {
         this.fetchUsers() // 页面加载时立即加载用户数据
+    },
+
+    beforeUnmount() {
+        clearTimeout(this.errorCooldown);
     },
     // 组件状态管理
     data() {
         return {
+            // 图片预览对话框状态
+            imageDialogVisible: false,
+            currentImage: '', // 当前显示的图片路径
             // 详情面板状态
+            showDetailPanel: false,
+            detailLoading: false,
             showDetailPanel: false,
             detailLoading: false,
             detailData: {
@@ -176,9 +200,10 @@ export default {
                 bankAccount: '',
                 createTime: '',
 
-                // 当role值为1时，显示的额外字段
-                license_img: '', // 新增字段：许可证图片
-                id_card_img: '', // 新增字段：身份证图片
+                credentials: {
+                    license: '',
+                    idCard: ''
+                }
             },
             filterForm: {
                 searchKey: '',
@@ -194,24 +219,51 @@ export default {
 
     // 业务方法
     methods: {
-        // 获取商户证件信息
-        // 修复证件信息获取逻辑
+        detectImageType(buffer) {
+            const header = new Uint8Array(buffer.slice(0, 4));
+            if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
+            if (header[0] === 0x89 && header[1] === 0x50) return 'image/png';
+            return 'application/octet-stream';
+        },
+        // 获取商户证件信息  
         async getCredentials(userId) {
-            const res = await userAPI.getUserCredentials(userId);
-            this.detailData.license_img = res.data.license_img;
-            this.detailData.id_card_img = res.data.id_card_img;
+
+            const response = await userAPI.getUserCredentials(userId);
+            const data = response.data;
+
+
+            // 直接更新credentials对象
+            this.detailData.credentials = {
+                license: `data:image/png;base64,${data.license}`,
+                idCard: `data:image/png;base64,${data.idCard}`
+            }
+
+        },
+        // 预览图片方法     
+        previewImage(imageUrl) {
+
+            if (!imageUrl) {
+                ElMessage.warning('图片路径无效');
+                return;
+            }
+
+            this.currentImage = imageUrl; // 设置当前显示的图片路径
+            this.imageDialogVisible = true; // 显示对话框
         },
 
-        // 查看许可证图片
+        // 查看证件方法
         viewLicenseImg() {
-            if (this.detailData.license_img) {
-                window.open(this.detailData.license_img, '_blank');
+            if (this.detailData.credentials.license) {
+                this.previewImage(this.detailData.credentials.license);
+            } else {
+                ElMessage.warning('许可证图片不可用');
             }
         },
-        // 查看身份证图片
         viewIdCardImg() {
-            if (this.detailData.id_card_img) {
-                window.open(this.detailData.id_card_img, '_blank');
+            if (this.detailData.credentials.idCard) {
+                this.previewImage(this.detailData.credentials.idCard);
+            } else {
+                ElMessage.warning('身份证图片不可用');
             }
         },
         // 获取用户详情
@@ -234,17 +286,25 @@ export default {
                         .replace(/(\d{4})(\d+)(\d{4})/, (_, prefix, middle, suffix) => `${prefix} **** **** ${suffix}`)
                         .replace(/(\d{4})(?=\d)/g, '$1 '), // 格式化显示
                     createTime: DateUtil.formatCN(data.createdAt),
-                    license_img: data.license_img || 'https://dummyimage.com/200x150/f0f0f0/999&text=License',
-                    id_card_img: data.id_card_img || 'https://dummyimage.com/200x150/f0f0f0/999&text=ID+Card',
+                    credentials: {
+                        license: data.license,
+                        idCard: data.idCard
+                    }
                 };
 
                 if (this.detailData.role === '商户') {
-                    await this.getCredentials(userId); // 获取商户证件信息
+                    try {
+                        await this.getCredentials(userId); // 获取商户证件信息
+                    } catch (error) {
+                        console.error('获取商户证件信息失败:', error);
+                        // 设置默认图片占位
+                        this.detailData.credentials = { license: '', idCard: '' }; // 重置证件信息
+                    }
                 }
 
                 this.showDetailPanel = true;
             } catch (error) {
-                ElMessage.error('详情加载失败');
+                console.error('获取用户详情失败:', error);
             } finally {
                 this.detailLoading = false;
             }
@@ -269,7 +329,7 @@ export default {
             // 执行分页切片（当前页数据）
             this.userList = formattedData.slice(
                 (this.currentPage - 1) * this.pageSize,
-                this.currentPage * this.pageSize
+                this.currentPage * this.pageSize - 1
             );
         },
 
@@ -367,9 +427,9 @@ export default {
 .user-detail-dialog {
     border-radius: 12px;
 
-    /* 恢复对话框关闭按钮 */
+    /* 对话框头部内边距清零 */
     :deep(.el-dialog__header) {
-        padding: 20px;
+        padding: 0;
     }
 
     /* 对话框内容区域内边距清零 */
@@ -440,6 +500,35 @@ h3 {
 
 /* 用户管理主区域 */
 .user-management {
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+
+    .filter-card {
+        border: 1px solid var(--el-border-color-light);
+        margin-bottom: 16px;
+
+        :deep(.el-card__body) {
+            padding: 16px 24px;
+        }
+    }
+
+    .data-table {
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+        :deep(.el-table__header) th {
+            background-color: var(--el-fill-color-light) !important;
+        }
+    }
+
+    .pagination-container {
+        margin-top: 16px;
+        padding: 16px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
     padding: 20px;
 }
 
@@ -516,5 +605,38 @@ h3 {
             color: var(--el-color-primary);
         }
     }
+}
+
+/* 图片样式 */
+.fixed-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    max-height: 600px;
+}
+
+.image-preview-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 580px;
+
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.el-dialog__body {
+    padding: 0 !important;
+}
+
+.image-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f56c6c;
+    padding: 20px;
 }
 </style>
