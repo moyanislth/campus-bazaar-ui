@@ -282,7 +282,7 @@ export default {
         console.log('Login data:', this.loginForm)
         userAPI.login(this.loginForm).then(res => {
           console.log('Login result:', res)
-          if (res.data.code === 200) {
+          if (res.code === 200) {
             if (this.rememberMe) {
               localStorage.setItem('savedLogin',
                 JSON.stringify({
