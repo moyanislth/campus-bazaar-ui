@@ -45,7 +45,6 @@ service.interceptors.response.use(
   response => {
     const res = response.data;
   
-    console.log('response.data:', res); // 打印响应数据,方便调试
     // 非业务响应处理
     if (typeof res.code === 'undefined') {
       console.log('response:', response); // 打印响应数据,方便调试
@@ -54,6 +53,7 @@ service.interceptors.response.use(
 
     // 标准业务响应处理,响应成功同时后端返回了code为200
     if (response.status === 200 && res.code === 200) {
+      console.log('response.data:', res); // 打印响应数据,方便调试
       return res;
     }
 

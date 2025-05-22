@@ -79,7 +79,7 @@
         </el-dialog>
 
         <!-- 搜索和筛选区域 -->
-        <el-card class="filter-card" shadow="never">
+        <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form" :model="filterForm">
                 <el-row :gutter="24">
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
@@ -98,7 +98,7 @@
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
                         <el-form-item label="用户状态" class="form-item-extend">
                             <el-select v-model="filterForm.filterStatus" placeholder="全部用户" clearable
-                                style="width: 100%" class="wide-dropdown">
+                                style="width: 100%" class="wide-dropdown" @change="handleSearch">
                                 <el-option label="待审核" value="0" />
                                 <el-option label="已通过" value="1" />
                                 <el-option label="已封禁" value="2" />
@@ -121,18 +121,18 @@
         <!-- 表格区域 -->
         <el-table v-loading="loading" :data="userList" border style="width: 100%" class="data-table" stripe
             :header-cell-style="{ background: '#f8f9fa', color: '#606266' }" :cell-style="{ padding: '12px 0' }">
-            <el-table-column prop="id" label="用户ID" width="140" align="center" />
-            <el-table-column prop="username" label="用户名" min-width="180" />
-            <el-table-column prop="phone" label="手机号" width="160" align="center" />
-            <el-table-column prop="registerTime" label="注册时间" width="200" align="center" sortable />
-            <el-table-column prop="status" label="状态" width="140" align="center">
+            <el-table-column prop="id" label="用户ID" width="" align="center" />
+            <el-table-column prop="username" label="用户名" width="" align="center" />
+            <el-table-column prop="phone" label="手机号" width="" align="center" />
+            <el-table-column prop="registerTime" label="注册时间" width="" align="center" />
+            <el-table-column prop="status" label="状态" width="" align="center">
                 <template #default="{ row }">
                     <el-tag :type="statusTagType(row.status)" size="small">
                         {{ statusText(row.status) }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="操作" width="240" align="center" fixed="right">
+            <el-table-column label="操作" width="200" align="center" fixed="right">
                 <template #default="{ row }">
                     <div class="action-buttons">
                         <el-button v-if="row.status === 0" type="primary" link size="small"
@@ -161,7 +161,7 @@
         <div class="pagination-container">
             <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]" :background="true" layout="total, sizes, prev, pager, next"
-                :total="total" @size-change="fetchUsers" @current-change="fetchUsers" />
+                :total="total" @size-change="pageSizeChange" @current-change="fetchUsers" />
         </div>
     </div>
 </template>
@@ -171,7 +171,6 @@ import { userAPI } from '@/api'
 import { Search, Picture } from '@element-plus/icons-vue'
 import { ElMessage, ElDialog } from 'element-plus'
 import DateUtil from '@/utils/dateUtil.js';
-
 export default {
     name: 'UserManagement',
     components: { Search, Picture, ElDialog },
@@ -236,11 +235,10 @@ export default {
             const response = await userAPI.getUserCredentials(userId);
             const data = response.data;
 
-
             // 直接更新credentials对象
             this.detailData.credentials = {
-                license: `data:image/png;base64,${data.license}`,
-                idCard: `data:image/png;base64,${data.idCard}`
+                license: `data:${this.detectImageType(data.license)};base64,${data.license}`,
+                idCard: `data:${this.detectImageType(data.idCard)};base64,${data.idCard}`
             }
 
         },
@@ -344,11 +342,15 @@ export default {
         async fetchUsers() {
             this.loading = true
             try {
-                const userListData = await userAPI.getAllUsers()
+                const userListData = this.searchUsers();
                 this.paginateData(userListData.data) // 调用格式化方法并更新数据
             } finally {
                 this.loading = false
             }
+        },
+        pageSizeChange() {
+            this.fetchUsers(); // 重新加载数据
+            this.currentPage = 1; // 重置到第一页
         },
         /**
          * 处理每页显示数量变化
@@ -369,9 +371,6 @@ export default {
             this.$nextTick(() => this.$refs.userTable?.doLayout?.());
         },
         /**
-         * 触发搜索操作（重置页码并重新加载数据）
-         */
-        /**
          * 处理用户搜索
          * 当搜索条件和状态均为默认值时查询全部用户
          */
@@ -381,6 +380,7 @@ export default {
             } else {
                 await this.searchUsers();
             }
+            this.currentPage = 1; // 重置到第一页
         },
 
         /**
@@ -391,14 +391,11 @@ export default {
             try {
                 this.loading = true;
                 const params = {
-                    page: this.currentPage,
-                    pageSize: this.pageSize,
-                    keyword: this.filterForm.searchKey || undefined,
-                    status: this.filterForm.filterStatus || undefined
+                    keyword: this.filterForm.searchKey || '',
+                    status: this.filterForm.filterStatus || ''
                 };
-                const res = await userAPI.searchUsers(params);
-                this.userList = res.data.list;
-                this.total = res.data.total;
+                const res = await userAPI.searchUsers(params)
+                this.paginateData(res.data); // 调用格式化方法并更新数据
             } catch (error) {
                 ElMessage.error('搜索失败：' + error.message);
             } finally {
@@ -533,6 +530,7 @@ h3 {
 /* 用户管理主区域 */
 .user-management {
     padding: 20px;
+    border-right: 80px solid transparent;
 }
 
 /* 筛选卡片样式 */

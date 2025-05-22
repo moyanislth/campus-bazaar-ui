@@ -15,7 +15,9 @@
                             <el-col :span="12">
                                 <el-descriptions title="基本信息" :column="1" border>
                                     <el-descriptions-item label="商品ID">{{ detailData.id || '-' }}</el-descriptions-item>
-                                    <el-descriptions-item label="商品名称">{{ detailData.title || '-'
+                                    <el-descriptions-item label="发布商家">{{ detailData.merchant_name || '-'
+                                    }}</el-descriptions-item>
+                                    <el-descriptions-item label="商品名称">{{ detailData.name || '-'
                                     }}</el-descriptions-item>
                                     <el-descriptions-item label="分类">{{ detailData.category || '-'
                                     }}</el-descriptions-item>
@@ -25,13 +27,12 @@
                             </el-col>
                             <el-col :span="12">
                                 <el-descriptions title="补充信息" :column="1" border>
-                                    <el-descriptions-item label="库存">{{ detailData.stock || '-'
+                                    <el-descriptions-item label="库存" class="desc-item">{{ detailData.stock || '-'
                                     }}</el-descriptions-item>
-                                    <el-descriptions-item label="上架状态">{{ detailData.statusText || '-'
+                                    <el-descriptions-item label="产品情况" class="desc-item">{{ detailData.condition || '-'
                                     }}</el-descriptions-item>
-                                    <el-descriptions-item label="创建时间">{{ detailData.createTime || '-'
-                                    }}</el-descriptions-item>
-                                    <el-descriptions-item label="商品描述">{{ detailData.description || '-'
+                                    <el-descriptions-item label="商品描述" class="desc-item">{{ detailData.description ||
+                                        '-'
                                     }}</el-descriptions-item>
                                 </el-descriptions>
                             </el-col>
@@ -70,12 +71,14 @@
                 </el-image>
             </div>
         </el-dialog>
+
+        <!-- 搜索 -->
         <el-card class="filter-card">
             <el-form :inline="true" label-width="80px" class="filter-form">
                 <el-row :gutter="24">
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
                         <el-form-item label="商品搜索" class="form-item-extend">
-                            <el-input v-model="searchKey" placeholder="商品名称/ID" clearable
+                            <el-input v-model="filterForm.searchKey" placeholder="商品名称/ID" clearable
                                 @keyup.enter.native="handleSearch" style="width: 100%">
                                 <template #prefix>
                                     <el-icon>
@@ -88,11 +91,11 @@
 
                     <el-col :xs="24" :sm="12" :md="10" :lg="7">
                         <el-form-item label="审核状态" class="form-item-extend">
-                            <el-select v-model="filterStatus" placeholder="全部状态" clearable class="wide-dropdown"
-                                style="width: 100%">
+                            <el-select v-model="filterForm.filterStatus" placeholder="全部状态" clearable
+                                class="wide-dropdown" style="width: 100%" @change="handleSearch">
                                 <el-option label="待审核" value="0" />
-                                <el-option label="已通过" value="1" />
-                                <el-option label="已驳回" value="2" />
+                                <el-option label="已上架" value="1" />
+                                <el-option label="已下架" value="2" />
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -111,24 +114,25 @@
 
         <el-table v-loading="loading" :data="productList" border style="width: 100%" class="mt-4" stripe
             :header-cell-style="{ background: '#f8f9fa', color: '#606266' }" :cell-style="{ padding: '12px 0' }">
-            <el-table-column prop="id" label="商品ID" width="140" align="center" />
-            <el-table-column prop="title" label="商品名称" min-width="180" />
-            <el-table-column prop="price" label="价格" width="160" align="center" />
-            <el-table-column prop="review_status" label="审核状态" width="140" align="center">
+            <el-table-column prop="id" label="商品ID" width="" align="center" />
+            <el-table-column prop="name" label="商品名称" width="" align="center" />
+            <el-table-column prop="merchant_name" label="发布商家" width="" align="center" />
+            <el-table-column prop="price" label="价格" width="" align="center" />
+            <el-table-column prop="status" label="审核状态" width="" align="center">
                 <template #default="{ row }">
-                    <el-tag :type="statusTagType(row.review_status)" size="small">
+                    <el-tag :type="statusTagType(row.status)" size="small">
                         {{ statusText(row.status) }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="操作" width="240" align="center" fixed="right">
+            <el-table-column label="操作" width="200" align="center" fixed="right">
                 <template #default="{ row }">
                     <div class="action-buttons">
-                        <el-button type="primary" link size="small" @click="handleApprove(row)">
+                        <el-button v-if="row.status === 0" type="primary" link size="small" @click="handleApprove(row)">
                             通过
                         </el-button>
-                        <el-button type="danger" link size="small" @click="handleReject(row)">
-                            驳回
+                        <el-button v-if="row.status != 2" type="danger" link size="small" @click="handleReject(row)">
+                            下架
                         </el-button>
                         <el-button type="info" link size="small" @click="handleDetail(row)">
                             详情
@@ -141,7 +145,7 @@
         <div class="pagination-container">
             <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]" :background="true" layout="total, sizes, prev, pager, next"
-                :total="total" @size-change="fetchProducts" @current-change="fetchProducts" />
+                :total="total" @size-change="pageSizeChange" @current-change="fetchProducts" />
         </div>
     </div>
 </template>
@@ -149,12 +153,13 @@
 <script>
 import { Search } from '@element-plus/icons-vue';
 import { goodsAPI } from '@/api';
+import { ElMessage, ElDialog } from 'element-plus'
 
 // 状态映射常量
 const STATUS_MAP = {
     0: { text: '待审核', type: 'warning' },
-    1: { text: '已通过', type: 'success' },
-    2: { text: '已驳回', type: 'danger' }
+    1: { text: '已上架', type: 'success' },
+    2: { text: '已下架', type: 'danger' }
 };
 
 /**
@@ -175,19 +180,26 @@ export default {
             detailLoading: false,
             detailData: {
                 id: '',
-                title: '',
-                price: '',
+                name: '',
                 category: '',
-                stock: '',
+                originalPrice: 0.00,  // 新增原价字段
+                discountPrice: 0.00,  // 新增折扣价字段
+                stock: 0,
+                merchantId: '',
+                merchant_name: '',
+                status: 0,
+                isBargain: false,
+                condition: '',
                 description: '',
-                statusText: '',
-                createTime: '',
+                nob: 0,
                 images: []
             },
 
             loading: false,
-            searchKey: '',
-            filterStatus: '',
+            filterForm: {
+                searchKey: '', // 搜索关键词
+                filterStatus: '' // 审核状态
+            },
             currentPage: 1,
             pageSize: 10,
             total: 0,
@@ -195,29 +207,49 @@ export default {
             productList: []
         }
     },
-    created() {
+    mounted() {
         this.fetchProducts();
-        // 如果需要使用 markRaw，可以这样使用
-        // this.someReactiveProperty = markRaw(someObject);
     },
     methods: {
+        detectImageType(buffer) {
+            const header = new Uint8Array(buffer.slice(0, 4));
+            if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
+            if (header[0] === 0x89 && header[1] === 0x50) return 'image/png';
+            return 'application/octet-stream';
+        },
         /** 获取商品详情 */
         async showDetail(productId) {
             this.detailLoading = true;
             try {
+                // 获取商品基本信息
                 const response = await goodsAPI.getProductById(productId);
                 const data = response.data;
                 this.detailData = {
                     id: data.id,
-                    title: data.title,
-                    price: '¥' + data.price.toFixed(2),
-                    category: data.categoryName,
+                    name: data.name,
+                    price: data.discountPrice == null ? data.originalPrice : data.discountPrice,
+                    category: data.category,
                     stock: data.stock,
                     description: data.description,
                     statusText: this.statusText(data.review_status),
-                    // createTime: DateUtil.formatCN(data.createTime),
-                    // images: data.images.map(img => `data:image/jpeg;base64,${img}`)
+                    merchantId: data.merchantId,
+                    isBargain: data.isBargain,
+                    condition: data.condition,
+                    nob: data.nob,
                 };
+
+                await goodsAPI.getMerchantName(this.detailData.merchantId).then(res => {
+                    this.detailData.merchant_name = res.data;
+                })
+
+                // 获取商品图片信息
+                const imageResponse = await goodsAPI.getProductImages(productId);
+                // 转换图片数据为base64 URL格式
+                this.detailData.images = imageResponse.data.map(img => {
+                    const mimeType = this.detectImageType(img);
+                    return `data:${mimeType};base64,${img}`;
+                });
+
                 this.showDetailPanel = true;
             } catch (error) {
                 console.error('获取商品详情失败:', error);
@@ -226,50 +258,74 @@ export default {
                 this.detailLoading = false;
             }
         },
+        /**
+         * 格式化原始数据并执行分页逻辑
+         * @param {Array} data - 父组件传递的原始用户数据
+         */
+        paginateData(data) {
+            const formattedData = (data || []).map(item => ({
+                id: item.id,
+                name: item.name,
+                merchant_name: item.merchantName,
+                price: item.discountPrice == null ? item.originalPrice : item.discountPrice,
+                status: item.status
+            }))
 
-        /** 预览图片 */
-        previewImage(imageUrl) {
-            if (!imageUrl) {
-                this.$message.warning('图片路径无效');
-                return;
+            // 更新总数据量
+            this.total = formattedData.length || 0;
+            if (this.total === 0) {
+                this.$message.warning('暂无数据');
             }
-            this.currentImage = imageUrl;
-            this.imageDialogVisible = true;
-        },
 
+            // 执行分页切片（当前页数据）
+            this.productList = formattedData.slice(
+                (this.currentPage - 1) * this.pageSize,
+                this.currentPage * this.pageSize
+            );
+        },
         /** 获取商品数据 */
         async fetchProducts() {
-            this.loading = true;
+            this.loading = true
             try {
-                const response = await goodsAPI.getProducts({
-                    current_page: this.currentPage,
-                    per_page: this.pageSize,
-                });
-                const data = response.data;
-
-                this.pagination.total = data.total_records;
-                this.productList = data.records.map
-
-
-
+                this.searchProducts();
+            } finally {
+                this.loading = false
+            }
+        },
+        /**
+         * 新建组合搜索方法
+         * 根据搜索关键词和状态进行联合查询
+         */
+        async searchProducts() {
+            try {
+                this.loading = true;
+                const params = {
+                    keyword: this.filterForm.searchKey || '',
+                    status: this.filterForm.filterStatus || ''
+                };
+                const res = await goodsAPI.searchProducts(params);
+                this.paginateData(res.data); // 调用格式化方法并更新数据
             } catch (error) {
-                console.error('获取商品列表失败:', error);
-                this.$message.error('数据加载失败');
+                ElMessage.error('搜索失败：' + error.message);
             } finally {
                 this.loading = false;
             }
         },
-
         /** 处理搜索 */
         handleSearch() {
             this.currentPage = 1;
             this.fetchProducts();
         },
+        pageSizeChange() {
+            this.handleSearch();
+        },
 
         /** 重置搜索条件 */
         resetSearch() {
-            this.searchKey = '';
-            this.filterStatus = '';
+            this.filterForm = {
+                searchKey: '',
+                filterStatus: ''
+            }
             this.handleSearch();
         },
 
@@ -332,6 +388,7 @@ export default {
 <style scoped>
 .product-review {
     padding: 20px;
+    border-right: 80px solid transparent;
 }
 
 .filter-card {

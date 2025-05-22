@@ -12,6 +12,24 @@ const getAllUsers = () => {
 }
 
 /**
+ * 搜索用户
+ * @returns {Promise} 用户信息请求结果
+ */
+const searchUsers = (searchData) => {
+  if (searchData.keyword === '') {
+    searchData.keyword = null;
+  }
+  if (searchData.status === '') {
+    searchData.status = null;
+  }
+  return request({
+    method: 'post',
+    url: '/api/user/searchUsers',
+    data: searchData,
+  })
+}
+
+/**
  * 获取特定用户信息接口
  * @returns {Promise} 用户信息请求结果
  */
@@ -126,4 +144,4 @@ const getUserCredentials = async (userId) => {
   });
 };
 
-export { getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
+export { searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
