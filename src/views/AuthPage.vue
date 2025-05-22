@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card">
 
-      23253
+      
       <!-- 选项卡导航 -->
       <div class="tab-nav">
         <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
