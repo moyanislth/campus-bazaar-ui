@@ -10,7 +10,11 @@
       <h2>我的钱包</h2>
       <div class="balance">
         <span class="label">账户余额：</span>
-        <span class="amount">¥ {{ balance.toFixed(2) }}</span>
+        <span class="amount">￥ {{ balance }}</span>
+      </div>
+      <div class="integral">
+        <span class="label">积分余额：</span>
+        <span class="amount">{{ integral }}</span>
       </div>
     </div>
 
@@ -31,7 +35,7 @@
 <script>
 /**
  * 钱包功能主视图
- * 包含余额显示、充值记录、消费记录功能
+ * 包含余额显示、积分显示、交易记录功能
  */
 export default {
   data() {
@@ -64,6 +68,12 @@ export default {
 </script>
 
 <style scoped>
+.integral {
+  background: white;
+  
+  box-shadow: 0 2px 8px rgb(255, 255, 255);
+}
+
 /* 样式参考现有ProfileView保持统一 */
 .wallet-view {
   max-width: 1200px;
