@@ -16,15 +16,16 @@
 
         <!-- 商品列表 -->
         <div class="product-list">
-            <div v-for="product in displayedProducts" :key="product.id" class="product-item">
-                <img :src="product.thumbnail" class="product-image" />
+            <div v-for="product in displayedProducts" :key="product.product.id" class="product-item">
+                <img :src="getMainImageUrl(product.productImages)" class="product-image" />
                 <div class="product-details">
-                    <h3 class="product-name">{{ product.name }}</h3>
+                    <h3 class="product-name">{{ product.product.name }}</h3>
                     <div class="price-sales">
-                        <span class="price">¥{{ product.price }}</span>
-                        <span class="sales">已售 {{ product.sales }}</span>
+                        <span class="price">¥{{ product.product.discountPrice == null ?
+                            product.product.originalPrice : product.product.discountPrice }}</span>
+                        <span class="sales">已售 {{ product.product.nob }}</span>
                     </div>
-                    <p class="description">{{ product.description }}</p>
+                    <p class="description">{{ product.product.description }}</p>
                 </div>
             </div>
             <div v-if="loading" class="loading">加载中...</div>
@@ -34,6 +35,8 @@
 </template>
 
 <script>
+import { goodsAPI } from '@/api';
+
 /**
  * 商品展示视图组件
  * 实现商品搜索、排序和无限滚动加载功能
@@ -49,20 +52,12 @@ export default {
             totalProducts: 50,
             loading: false,
             products: [],
-            // 模拟数据生成
-            mockProducts: Array.from({ length: 3 }, (_, i) => ({
-                id: i + 1,
-                name: `商品 ${i + 1}`,
-                price: (Math.random() * 500 + 50).toFixed(2),
-                sales: Math.floor(Math.random() * 1000),
-                thumbnail: 'img/index.jpg',
-                description: '优质校园二手商品，物美价廉',
-                createdAt: Date.now() - i * 100000
-            }))
+
         }
     },
     computed: {
         displayedProducts() {
+
             return this.products.slice(0, this.currentPage * this.pageSize)
         },
         hasMore() {
@@ -80,22 +75,13 @@ export default {
         /** 加载商品数据 */
         async loadProducts() {
             this.loading = true
-            // 模拟API请求延迟
-            await new Promise(resolve => setTimeout(resolve, 500))
 
-            // 实际应用中应替换为API调用
-            let filtered = this.mockProducts
-                .filter(p => p.name.includes(this.searchQuery))
-                .sort((a, b) => {
-                    switch (this.sortBy) {
-                        case 'sales': return b.sales - a.sales
-                        case 'price_asc': return a.price - b.price
-                        case 'price_desc': return b.price - a.price
-                        default: return b.createdAt - a.createdAt
-                    }
-                })
+            let filtered = await goodsAPI.userSearch(this.searchQuery, this.sortBy)
+            console.log("filtered") // 输出过滤后的商品数组，用于调试和检查过滤逻辑是否正确。
+            console.log(filtered) // 输出过滤后的商品数组，用于调试和检查过滤逻辑是否正确。
 
-            this.products = filtered
+            this.products = filtered.data
+
             this.loading = false
         },
 
@@ -105,7 +91,30 @@ export default {
             if (scrollTop + clientHeight >= scrollHeight - 100 && !this.loading && this.hasMore) {
                 this.currentPage++
             }
+        },
+        detectImageType(buffer) {
+            const header = new Uint8Array(buffer.slice(0, 4));
+            if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
+            if (header[0] === 0x89 && header[1] === 0x50) return 'image/png';
+            return 'application/octet-stream';
+        },
+        /**
+         * 获取商品主图URL（优先isMain为true的图片，否则取第一个）
+         * @param {Array} images 商品图片数组
+         * @returns {string} 主图URL
+         */
+        getMainImageUrl(images) {
+            if (!images || images.length === 0) return ''; // 处理图片数组为空的情况
+            const mainImage = images.find(img => img.isMain) || images[0]; // 确保mainImage存在
+
+            if (!mainImage.imageData) {
+                console.error('Image data is missing:', mainImage);
+                return '';
+            }
+            const mimeType = this.detectImageType(mainImage.imageData); // Use imageData instead of data
+            return `data:${mimeType};base64,${mainImage.imageData}`;
         }
+
     }
 }
 </script>

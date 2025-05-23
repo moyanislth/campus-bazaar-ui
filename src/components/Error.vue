@@ -1,5 +1,5 @@
 <template>
-    <img src="/public/404.jpg" alt="404 NOT FOUND">
+    <img src="/404.jpg" alt="404 NOT FOUND">
     <div>
         <p>
             页面将在<span>{{ time }}</span>秒后自动跳转首页，<br>

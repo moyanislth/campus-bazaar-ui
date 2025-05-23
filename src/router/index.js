@@ -65,7 +65,7 @@ const routes = [
     name: 'Error'
   },
   {
-    path: '/:pathMatch(.*)*',
+    path: '/:pathMatch(.*)*', // 匹配所有未定义的路由
     redirect: '/error'
   }
 ]

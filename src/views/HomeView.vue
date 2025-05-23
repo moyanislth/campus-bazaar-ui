@@ -30,27 +30,35 @@
       <!-- 单个商品卡片，使用v-for循环生成 -->
       <div v-for="product in products" :key="product.id" class="product-card">
         <!-- 商品缩略图 -->
-        <img :src="product.thumbnail" alt="商品图片" class="product-thumbnail">
+        <img :src="getMainImageUrl(product.productImages)" alt="商品图片" class="product-thumbnail">
 
         <!-- 商品信息容器 -->
         <div class="product-info">
           <!-- 商品价格显示 -->
-          <span class="price">¥{{ product.price }}</span>
+          <span class="price">¥{{ product.product.discountPrice === null ? product.product.originalPrice :
+            product.product.discountPrice }}</span>
 
           <!-- 商家信息容器，使用flex布局两端对齐 -->
           <div class="merchant-info">
             <!-- 商家名称 -->
-            <span class="merchant">{{ product.merchant }}</span>
+            <span class="merchant">{{ product.product.merchantName }}</span>
             <!-- 销量显示 -->
-            <span class="sales">{{ product.sales }}人已购</span>
+            <span class="sales">{{ product.product.nob }}人已购</span>
           </div>
         </div>
       </div>
+    </div>
+    <!-- 加载提示 -->
+    <div v-if="loading" class="loading-tip" style="text-align: center; padding: 20px; color: #666;">加载中...</div>
+    <!-- 无更多数据提示 -->
+    <div v-if="!hasMore && !loading" class="no-more-tip" style="text-align: center; padding: 20px; color: #999;">没有更多商品了
     </div>
   </div>
 </template>
 
 <script>
+import { goodsAPI } from '@/api';
+
 /**
  * 首页视图组件
  * 展示平台欢迎信息和核心功能入口
@@ -63,30 +71,75 @@ export default {
       currentSlide: 0,
       timer: null, // 新增定时器引用
       carouselItems: [
-        // { image: 'https://source.unsplash.com/random/800x400?electronics,1' },
         { image: '/img/carousel/1.png' },
         { image: '/img/carousel/2.png' },
         { image: '/img/carousel/3.png' },
         { image: '/img/carousel/4.png' },
         { image: '/img/carousel/5.png' }
       ],
-      /** 商品列表 */
-      products: Array.from({ length: 28 }, (_, i) => ({
-        id: i + 1,
-        thumbnail: `https://ts1.tc.mm.bing.net/th/id/R-C.a7c465d8fc3e78cbc5f6a2d9344aedfe?rik=B%2fdEs7bRZYYkYQ&riu=http%3a%2f%2fimg95.699pic.com%2fphoto%2f60037%2f1974.jpg_wh300.jpg&ehk=DjgTWbXLL7BVeTTWXGWuGE%2fE1ZZTFp%2fFzvf1RhT17PI%3d&risl=&pid=ImgRaw&r=0`,
-        price: (Math.random() * 500 + 50).toFixed(2),
-        merchant: `商家${String.fromCharCode(65 + i % 5)}`,
-        sales: Math.floor(Math.random() * 1000)
-      }))
+      /** 分页控制 */
+      currentPage: 1,
+      pageSize: 15, // 每页展示的商品数量
+      loading: false, // 加载状态
+      hasMore: true, // 是否有更多数据
+      allProducts: [], // 存储所有商品数据
+      /** 用于展示的商品列表 */
+      products: []
     }
   },
   mounted() {
     this.startAutoPlay(); // 组件挂载后启动自动播放
+    this.getProducts(); // 初始加载第一页数据
+    window.addEventListener('scroll', this.handleScroll); // 添加滚动监听
   },
   beforeUnmount() {
     this.stopAutoPlay(); // 组件销毁前清除定时器
+    window.removeEventListener('scroll', this.handleScroll); // 移除滚动监听
   },
   methods: {
+
+    /**
+     * 处理滚动事件
+     */
+    handleScroll() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      // 滚动到底部附近且有更多数据时加载
+      if (scrollTop + windowHeight >= documentHeight - 100 && !this.loading && this.hasMore) {
+        this.currentPage++;
+        this.getProducts();
+      }
+    },
+
+    /**
+     * 获取分页商品列表
+     * @returns {Promise<Array>} 商品列表
+    */
+    async getProducts() {
+      if (this.loading) return; // 防止重复请求
+      this.loading = true;
+      try {
+        // 首次加载获取所有商品数据
+        if (this.currentPage === 1) {
+          const res = await goodsAPI.getAllProductsWithImg(); // 调用无参方法获取所有数据
+          this.allProducts = res.data; // 存储所有商品
+        }
+        // 计算当前页需要展示的数据范围
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = start + this.pageSize;
+        const newProducts = this.allProducts.slice(start, end);
+        // 初始页直接赋值，后续页累加
+        this.products = this.currentPage === 1 ? newProducts : [...this.products, ...newProducts];
+        // 判断是否有更多数据
+        this.hasMore = end < this.allProducts.length;
+      } catch (error) {
+        console.error('获取商品列表失败:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     /** 启动自动播放 */
     startAutoPlay() {
       this.timer = setInterval(() => {
@@ -118,6 +171,30 @@ export default {
     restartAutoPlay() {
       this.stopAutoPlay();
       this.startAutoPlay();
+    },
+
+    detectImageType(buffer) {
+      const header = new Uint8Array(buffer.slice(0, 4));
+      if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
+      if (header[0] === 0x89 && header[1] === 0x50) return 'image/png';
+      return 'application/octet-stream';
+    },
+
+    /**
+     * 获取商品主图URL（优先isMain为true的图片，否则取第一个）
+     * @param {Array} images 商品图片数组
+     * @returns {string} 主图URL
+     */
+    getMainImageUrl(images) {
+      if (!images || images.length === 0) return ''; // 处理图片数组为空的情况
+      const mainImage = images.find(img => img.isMain) || images[0]; // 确保mainImage存在
+
+      if (!mainImage.imageData) {
+        console.error('Image data is missing:', mainImage);
+        return '';
+      }
+      const mimeType = this.detectImageType(mainImage.imageData); // Use imageData instead of data
+      return `data:${mimeType};base64,${mainImage.imageData}`;
     }
   }
 }
