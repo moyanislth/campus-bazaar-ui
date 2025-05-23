@@ -16,24 +16,24 @@
                                 <el-descriptions title="基本信息" :column="1" border>
                                     <el-descriptions-item label="商品ID">{{ detailData.id || '-' }}</el-descriptions-item>
                                     <el-descriptions-item label="发布商家">{{ detailData.merchant_name || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                     <el-descriptions-item label="商品名称">{{ detailData.name || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                     <el-descriptions-item label="分类">{{ detailData.category || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                     <el-descriptions-item label="价格">¥{{ detailData.price || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                 </el-descriptions>
                             </el-col>
                             <el-col :span="12">
                                 <el-descriptions title="补充信息" :column="1" border>
                                     <el-descriptions-item label="库存" class="desc-item">{{ detailData.stock || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                     <el-descriptions-item label="产品情况" class="desc-item">{{ detailData.condition || '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                     <el-descriptions-item label="商品描述" class="desc-item">{{ detailData.description ||
                                         '-'
-                                    }}</el-descriptions-item>
+                                        }}</el-descriptions-item>
                                 </el-descriptions>
                             </el-col>
                         </el-row>
@@ -365,7 +365,7 @@ export default {
                     type: 'warning'
                 });
 
-                // 这里应该调用API而不是修改mockData
+                // TODO:这里应该调用API而不是修改mockData
                 await goodsAPI.rejectProduct(row.id);
                 this.$message.success('操作成功');
                 this.fetchProducts();
