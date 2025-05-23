@@ -70,4 +70,36 @@ const getMerchantName = (merchantId) => {
     }
   })
 }
-export { getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
+
+/**
+ * 更新商品状态
+ * @returns {Promise} 商品信息请求结果
+ */
+const updateProductStatus = (id, status) => {
+  return request({
+    method: 'patch',
+    url: '/api/product/updateProductStatus',
+    params: {
+      id: id,
+      status: status,
+    }
+  })
+}
+
+/**
+ * 审核通过
+ * @returns {Promise} 商品信息请求结果
+ */
+const approveProduct = (id) => {
+  return updateProductStatus(id, 1);
+}
+
+/**
+ * 审核不通过
+ * @returns {Promise} 商品信息请求结果
+ */
+const rejectProduct = (id) => {
+  return updateProductStatus(id, 2);
+}
+
+export { approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
