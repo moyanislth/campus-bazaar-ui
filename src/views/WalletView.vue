@@ -10,7 +10,7 @@
       <h2>我的钱包</h2>
       <div class="balance">
         <span class="label">账户余额：</span>
-        <span class="amount">¥ {{ balance.toFixed(2) }}</span>
+        <span class="amount">￥ {{ balance }}</span>
       </div>
       <div class="integral">
         <span class="label">积分余额：</span>
@@ -69,9 +69,9 @@ export default {
 
 <style scoped>
 .integral {
-  margin-top: 1rem;
-  font-size: 1.1em;
-  color: #666;
+  background: white;
+  
+  box-shadow: 0 2px 8px rgb(255, 255, 255);
 }
 
 /* 样式参考现有ProfileView保持统一 */
