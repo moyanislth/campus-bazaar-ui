@@ -13,6 +13,7 @@ const service = axios.create({
   timeout: 5000, // 请求超时时间（毫秒）
 });
 
+
 // 请求拦截器
 service.interceptors.request.use(
   /**
@@ -21,12 +22,13 @@ service.interceptors.request.use(
    * @returns {Object} 处理后的请求配置
    */
   config => {
-    // 注入认证令牌,localStorage是浏览器提供的本地存储API,用于在浏览器中存储数据,
-    const token = localStorage.getItem('token');
-    if (token) {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    const token = userInfo?.token;
+    if (userInfo != null && token != null) {
       // Bearer令牌格式,注意Bearer要有空格
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   error => {
@@ -48,6 +50,12 @@ service.interceptors.response.use(
     // 非业务响应处理
     if (typeof res.code === 'undefined') {
       console.log('response:', response); // 打印响应数据,方便调试
+
+      if (response.data.code === 401) { // 增加认证失败判断
+        localStorage.removeItem('token');
+        router.push('/auth');
+        return Promise.reject(new Error('请重新登录'));
+      }
       return response;
     }
 

@@ -58,6 +58,15 @@ const routes = [
     path: '/auth',
     component: () => import('@/views/AuthPage.vue'),
     name: 'Auth'
+  },
+  {
+    path: '/error',
+    component: () => import('@/components/Error.vue'),
+    name: 'Error'
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/error'
   }
 ]
 
@@ -66,11 +75,34 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫, 检查用户是否登录
-router.beforeEach((to, from) => {
-  if (to.meta.requiresAuth && !isAuthenticated()) {
-    return '/login'
+// 路由守卫，检查用户权限
+router.beforeEach((to, from, next) => {
+  const userInfo = localStorage.getItem('userInfo');
+
+  // 1. 检查是否登录（排除登录页本身）
+  if (!userInfo && to.path !== '/auth') {
+    next('/auth');  // 跳转到登录页
+    return;        // 关键！终止后续逻辑
   }
-})
+
+  // 2. 管理员权限检查
+  if (to.path.startsWith('/admin')) {
+    try {
+      const json = JSON.parse(userInfo);
+      if (json.role !== 2) {  // 2 是管理员
+        next('/error?code=403'); // 无权限页
+        return;
+      }
+    } catch (e) {
+      console.error('解析 userInfo 失败', e);
+      next('/error?code=500'); // 数据异常页
+      return;
+    }
+  }
+
+  // 4. 默认放行
+  next();
+});
+
 
 export default router
