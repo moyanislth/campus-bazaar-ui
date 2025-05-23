@@ -57,7 +57,6 @@ export default {
 
             } catch (e) {
                 console.error('数据初始化失败:', e);
-                this.$message.error(e.message || '数据加载失败');
             }
         },
 

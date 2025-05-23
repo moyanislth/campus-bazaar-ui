@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card">
 
-      
+
       <!-- 选项卡导航 -->
       <div class="tab-nav">
         <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
@@ -102,7 +102,6 @@
 
 <script>
 import { userAPI } from '@/api'
-import { request } from '@/utils/request';
 import { ElMessage } from 'element-plus';
 import 'element-plus/dist/index.css';
 
@@ -248,8 +247,8 @@ export default {
       }
       // 执行注册请求
       const regRes = await userAPI.register(this.registerForm);
-      // console.log('Register result:', regRes);
-      if (regRes.data.code === 200) {
+      console.log('Register result:', regRes);
+      if (regRes.code === 200) {
         ElMessage.success('注册成功');
 
         // 重置表单数据
@@ -281,10 +280,11 @@ export default {
     // 处理登录表单提交
     handleLogin() {
       if (this.validateLogin()) {
-        console.log('Login data:', this.loginForm)
+
         userAPI.login(this.loginForm).then(res => {
-          console.log('Login result:', res)
+
           if (res.code === 200) {
+
             if (this.rememberMe) {
               localStorage.setItem('savedLogin',
                 JSON.stringify({
@@ -295,6 +295,10 @@ export default {
             } else {
               localStorage.removeItem('savedLogin');
             }
+
+            // 保存用户信息到本地存储
+            localStorage.setItem('userInfo', JSON.stringify(res.data))
+            console.log(localStorage.getItem('userInfo'))
             ElMessage({
               type: 'success',
               message: '登录成功'

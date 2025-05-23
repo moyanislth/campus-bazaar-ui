@@ -48,9 +48,11 @@ export default {
         { title: '我的', path: '/profile' }
       ]
 
-      // 模拟用户角色检测，实际应替换为Vuex状态获取
-      baseItems.push({ title: '后台', path: '/admin', class: 'admin-link' })
-
+      // 如果是管理员，添加后台入口
+      const json = JSON.parse(localStorage.getItem("userInfo"))
+      if (json.role === 2) {
+        baseItems.push({ title: '后台', path: '/admin' })
+      }
 
       baseItems.push({ title: '登出', path: '/auth' })
       return baseItems
