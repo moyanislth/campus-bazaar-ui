@@ -23,6 +23,14 @@
         <h3>微信</h3>
         <el-input v-model="user.wechat" placeholder="请输入微信号" :maxlength="20" />
       </div>
+      <div class="info-field">
+        <h3>钱包管理</h3>
+        <router-link to="/wallet">
+          <el-button type="primary">
+            查看钱包余额与交易记录
+          </el-button>
+        </router-link>
+      </div>
     </div>
 
     <!-- 新增地址管理 -->

@@ -19,6 +19,12 @@ const routes = [
         path: '/profile',
         name: 'Profile',
         component: () => import('@/views/common/ProfileView.vue')
+      },
+      {
+        path: '/wallet',
+        name: 'Wallet',
+        component: () => import('@/views/WalletView.vue'),
+        meta: { requiresAuth: false } // 修改此处为false
       }
     ]
   },
@@ -61,28 +67,10 @@ const router = createRouter({
 })
 
 // 路由守卫, 检查用户是否登录
-router.beforeEach((to, _from, next) => {
-  const isAuthenticated = localStorage.getItem('token')
-  const isAdmin = localStorage.getItem('isAdmin') === 'true'
-
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!isAuthenticated) {
-      next({
-        name: 'Auth',
-        query: { redirect: to.fullPath }
-      })
-      return
-    }
+router.beforeEach((to, from) => {
+  if (to.meta.requiresAuth && !isAuthenticated()) {
+    return '/login'
   }
-
-  if (to.matched.some(record => record.meta.adminOnly)) {
-    if (!isAdmin) {
-      next('/')
-      return
-    }
-  }
-
-  next()
 })
 
 export default router
