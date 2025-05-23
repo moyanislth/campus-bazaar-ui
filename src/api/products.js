@@ -12,6 +12,17 @@ const getAllProducts = () => {
 }
 
 /**
+ * 获取所有商品信息(包括图片)
+ * @returns {Promise} 用户信息请求结果
+ */
+const getAllProductsWithImg = () => {
+  return request({
+    method: 'get',
+    url: '/api/product/getAllProductsWithImg',
+  })
+}
+
+/**
  * 获取商品信息
  * @returns {Promise} 商品信息请求结果
  */
@@ -54,6 +65,27 @@ const searchProducts = (searchData) => {
     method: 'post',
     url: '/api/product/searchProducts',
     data: searchData,
+  })
+}
+
+/**
+ * 搜索商品,用户根据关键字和排序条件查询商品信息
+ * @returns {Promise} 商品信息请求结果
+ */
+const userSearch = (keyword, sort) => {
+  if (keyword === '') {
+    keyword = null;
+  }
+  if (!['newest', 'sales', 'price_asc', 'price_desc'].includes(sort)) {
+    sort = 'newest';
+  }
+  return request({
+    method: 'get',
+    url: '/api/product/userSearch',
+    params: {
+      keyword: keyword,
+      sort: sort,
+    }
   })
 }
 
@@ -102,4 +134,4 @@ const rejectProduct = (id) => {
   return updateProductStatus(id, 2);
 }
 
-export { approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
+export { userSearch, getAllProductsWithImg, approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
