@@ -79,8 +79,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userInfo = localStorage.getItem('userInfo');
 
+
   // 1. 检查是否登录（排除登录页本身）
-  if (!userInfo && to.path !== '/auth') {
+  if (userInfo === null && to.path !== '/auth') {
     next('/auth');  // 跳转到登录页
     return;        // 关键！终止后续逻辑
   }
