@@ -63,14 +63,16 @@ export default {
         { title: '我的', path: '/profile' }
       ]
 
-      // 如果是管理员，添加后台入口
+      // 如果是管理员，添加后台入口 如果是商家，添加上架功能
       const json = JSON.parse(localStorage.getItem("userInfo"))
 
 
       if (json != null && json.role === 2) {
         baseItems.push({ title: '后台', path: '/admin' })
       }
-
+      else if (json!= null && json.role === 1) {
+        baseItems.push({ title: '上架', path: '/publish' })
+      }
 
       // 登出项使用 `handler` 代替 `path`，绑定清空localStorage的方法
       baseItems.push({ title: '登出', handler: 'handleLogout' });

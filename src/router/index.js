@@ -57,6 +57,16 @@ const routes = [
         name: 'ProductReview',
         component: () => import('@/views/admin/ProductReview.vue'),
         meta: { title: '商品管理' }
+      },
+      // 在路由数组中新增
+      {
+        path: '/publish',
+        name: 'ProductPublish',
+        component: () => import('@/views/admin/ProductPublish.vue'),
+        meta: { 
+          requiresAuth: true,
+          allowedRoles: ['merchant'] // 仅商家角色可访问
+        }
       }
     ]
   },
