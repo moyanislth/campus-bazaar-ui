@@ -14,7 +14,7 @@
       </div>
       <div class="integral">
         <span class="label">积分余额：</span>
-        <span class="amount">{{ integral }}</span>
+        <span class="amount">   {{ integral }}</span>
       </div>
     </div>
 
@@ -42,6 +42,7 @@ export default {
     return {
       activeTab: 'recharge',
       balance: 0.00,
+      integral: 0,
       rechargeRecords: [],
       paymentRecords: []
     }
@@ -66,6 +67,24 @@ export default {
   }
 }
 </script>
+mounted() {
+  // ... existing code ...
+  this.fetchWalletData();
+},
+methods: {
+  async fetchWalletData() {
+    try {
+      const [balanceRes, integralRes] = await Promise.all([
+        getWalletBalance(),
+        getUserIntegral()
+      ]);
+      this.balance = balanceRes.data;
+      this.integral = integralRes.data.integral; 
+    } catch (error) {
+      console.error('数据获取失败:', error);
+    }
+  }
+}
 
 <style scoped>
 .integral {
