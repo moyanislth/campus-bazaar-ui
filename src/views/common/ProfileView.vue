@@ -90,6 +90,29 @@
     </div>
   </div>
 </el-dialog>
+<!-- 余额支付弹窗 -->
+<el-dialog title="余额支付" v-model="balanceDialogVisible" width="400px">
+  <div class="payment-content">
+    <el-descriptions :column="1" border>
+      <el-descriptions-item label="当前余额">
+        ¥{{ userBalance.toFixed(2) }}
+      </el-descriptions-item>
+      <el-descriptions-item label="需支付金额">
+        ¥{{ paymentAmount.toFixed(2) }}
+      </el-descriptions-item>
+    </el-descriptions>
+    
+    <div class="payment-actions">
+      <el-button @click="balanceDialogVisible = false">取消</el-button>
+      <el-button 
+        type="primary"
+        @click="handleBalancePayment"
+        :disabled="paymentAmount === 0">
+        确认支付
+      </el-button>
+    </div>
+  </div>
+</el-dialog>
 
 
     <div class="address-section">
@@ -177,7 +200,9 @@ export default {
       editingAddress: null , // 当前编辑地址
       pointsDialogVisible: false, // 新增积分弹窗控制
       userPoints: 1000,          // 用户积分（初始值）
-      paymentAmount: 0            // 支付金额
+      paymentAmount: 0  ,
+      balanceDialogVisible: false,
+      userBalance: 1000.00,          // 支付金额
     }
   },
   methods: {
@@ -189,14 +214,15 @@ export default {
     },
     // 处理支付方式选择
     handlePayment(type) {
-      if (type === '积分支付') {
-        this.paymentAmount = this.cart.totalPrice
-        this.pointsDialogVisible = true
-        return
-      }
-      this.paymentDialogVisible = false;
-      this.$message.success(`已选择${type}支付`);
-    },
+    this.paymentAmount = this.cart.totalPrice;
+    
+    if (type === '积分支付') {
+      this.pointsDialogVisible = true;
+    } else if (type === '余额支付') {
+      this.balanceDialogVisible = true;
+    }
+   },
+    
     /**
      * 更新购物车总价
      */
@@ -271,26 +297,60 @@ export default {
     /** 删除地址 */
     deleteAddress(id) {
       this.user.addresses = this.user.addresses.filter(a => a.id !== id)
-    }
-  },
-
-  /**
+    },
+    /**
    * 执行积分支付
    */
-  handlePointsPayment() {
+   handlePointsPayment() {
     if (this.userPoints >= this.paymentAmount) {
-      this.userPoints -= this.paymentAmount
-      this.$message.success(`支付成功！剩余积分：${this.userPoints}`)
+      this.userPoints -= this.paymentAmount;
+      this.cart.cartItems = [];
+      this.cart.totalPrice = 0;
+      this.saveToLocalStorage();
+
+      this.$message.success({
+        message: '支付成功',
+        duration: 1500,
+        onClose: () => {
+          this.$router.push({ name: 'Profile' });
+        }
+      });
+    } else {
+      this.$message.error('积分不足，支付失败');
+    }
+    this.pointsDialogVisible = false;
+    this.paymentDialogVisible = false;
+  },
+   handleBalancePayment() {
+    if (this.userBalance >= this.paymentAmount) {
+      // 扣除余额（保留两位小数）
+      this.userBalance = Number((this.userBalance - this.paymentAmount).toFixed(2));
       
       // 清空购物车
-      this.cart.cartItems = []
-      this.cart.totalPrice = 0
-      this.saveToLocalStorage()
+      this.cart.cartItems = [];
+      this.cart.totalPrice = 0;
+      this.saveToLocalStorage();
+
+      // 成功提示（1.5秒后返回个人页）
+      this.$message.success({
+        message: '余额支付成功',
+        duration: 1500,
+        onClose: () => {
+          this.$router.push({ name: 'Profile' });
+        }
+      });
     } else {
-      this.$message.error('积分不足，支付失败')
+      // 失败提示
+      this.$message.error('余额不足，支付失败');
     }
-    this.pointsDialogVisible = false
+    
+    // 关闭所有弹窗
+    this.balanceDialogVisible = false;
+    this.paymentDialogVisible = false;
   }
+  },
+
+  
 }
 </script>
 
@@ -465,9 +525,6 @@ export default {
   padding-top: 12px;
 
 }
-</style>
-
-/* 在style区块末尾添加 */
 .points-payment-content {
   padding: 20px;
 
@@ -484,4 +541,23 @@ export default {
     text-align: right;
   }
 }
+
+.payment-content {
+  padding: 20px 25px;
+
+  .el-descriptions__item {
+    padding: 12px 0;
+  }
+  
+  .payment-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+  }
+}
+</style>
+
+
+
 
