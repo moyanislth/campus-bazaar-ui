@@ -36,11 +36,8 @@
 
 <script>
 import { goodsAPI } from '@/api';
+import { debounce } from 'lodash-es';
 
-/**
- * 商品展示视图组件
- * 实现商品搜索、排序和无限滚动加载功能
- */
 export default {
     name: 'ProductView',
     data() {
@@ -49,72 +46,91 @@ export default {
             sortBy: 'newest',
             currentPage: 1,
             pageSize: 10,
-            totalProducts: 50,
             loading: false,
-            products: [],
-
+            allProducts: [], // 存储从API获取的所有产品
+            scrollDebounce: null
         }
     },
     computed: {
         displayedProducts() {
-
-            return this.products.slice(0, this.currentPage * this.pageSize)
+            return this.allProducts.slice(0, this.currentPage * this.pageSize);
         },
         hasMore() {
-            return this.currentPage * this.pageSize < this.products.length
+            return this.currentPage * this.pageSize < this.allProducts.length;
         }
     },
     mounted() {
-        window.addEventListener('scroll', this.handleScroll)
-        this.loadProducts()
+        this.scrollDebounce = debounce(this.handleScroll, 100);
+        window.addEventListener('scroll', this.scrollDebounce);
+        this.loadProducts();
     },
     beforeUnmount() {
-        window.removeEventListener('scroll', this.handleScroll)
+        window.removeEventListener('scroll', this.scrollDebounce);
     },
     methods: {
-        /** 加载商品数据 */
+        /** 加载所有商品数据 */
         async loadProducts() {
-            this.loading = true
+            this.loading = true;
+            try {
+                const response = await goodsAPI.userSearch(this.searchQuery, this.sortBy);
+                console.log('API响应数据:', response.data); // 调试用
 
-            let filtered = await goodsAPI.userSearch(this.searchQuery, this.sortBy)
-            console.log("filtered") // 输出过滤后的商品数组，用于调试和检查过滤逻辑是否正确。
-            console.log(filtered) // 输出过滤后的商品数组，用于调试和检查过滤逻辑是否正确。
+                // 确保使用新数组触发响应式更新
+                this.allProducts = Array.isArray(response.data) ? [...response.data] : [];
+                this.currentPage = 1;
 
-            this.products = filtered.data
-
-            this.loading = false
+            } catch (error) {
+                console.error('加载商品失败:', error);
+                this.allProducts = [];
+            } finally {
+                this.loading = false;
+            }
         },
 
         /** 处理滚动事件 */
         handleScroll() {
-            const { scrollTop, clientHeight, scrollHeight } = document.documentElement
-            if (scrollTop + clientHeight >= scrollHeight - 100 && !this.loading && this.hasMore) {
-                this.currentPage++
+            if (this.loading || !this.hasMore) return;
+
+            const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                this.currentPage++;
             }
         },
+
+        // 图片处理方法保持不变
         detectImageType(buffer) {
             const header = new Uint8Array(buffer.slice(0, 4));
             if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
             if (header[0] === 0x89 && header[1] === 0x50) return 'image/png';
             return 'application/octet-stream';
         },
-        /**
-         * 获取商品主图URL（优先isMain为true的图片，否则取第一个）
-         * @param {Array} images 商品图片数组
-         * @returns {string} 主图URL
-         */
+
         getMainImageUrl(images) {
-            if (!images || images.length === 0) return ''; // 处理图片数组为空的情况
-            const mainImage = images.find(img => img.isMain) || images[0]; // 确保mainImage存在
+            if (!images || images.length === 0) return '';
+            const mainImage = images.find(img => img.isMain) || images[0];
 
             if (!mainImage.imageData) {
                 console.error('Image data is missing:', mainImage);
                 return '';
             }
-            const mimeType = this.detectImageType(mainImage.imageData); // Use imageData instead of data
+            const mimeType = this.detectImageType(mainImage.imageData);
             return `data:${mimeType};base64,${mainImage.imageData}`;
-        }
 
+        }
+    },
+    watch: {
+        searchQuery: {
+            handler() {
+                this.loadProducts();
+            },
+            immediate: false
+        },
+        sortBy: {
+            handler() {
+                this.loadProducts();
+            },
+            immediate: false
+        }
     }
 }
 </script>
