@@ -16,6 +16,12 @@ const routes = [
         component: () => import('@/views/common/ProductView.vue')
       },
       {
+        path: '/products/:id',
+        name: 'ProductDetail',
+        component: () => import('@/views/common/ProductDetail.vue'),
+        meta: { title: '商品详情' }
+      },
+      {
         path: '/profile',
         name: 'Profile',
         component: () => import('@/views/common/ProfileView.vue')
@@ -23,7 +29,7 @@ const routes = [
       {
         path: '/wallet',
         name: 'Wallet',
-        component: () => import('@/views/WalletView.vue'),
+        component: () => import('@/views/common/WalletView.vue'),
         meta: { requiresAuth: false } // 修改此处为false
       }
     ]
