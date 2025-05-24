@@ -65,9 +65,9 @@ export default {
 
       // 如果是管理员，添加后台入口
       const json = JSON.parse(localStorage.getItem("userInfo"))
-      
 
-      if ( json!=null&&json.role === 2) {
+
+      if (json != null && json.role === 2) {
         baseItems.push({ title: '后台', path: '/admin' })
       }
 

@@ -61,7 +61,7 @@
 
     </div>
 
-    <el-dialog title="选择支付方式" v-model:visible="paymentDialogVisible" width="30%">
+    <el-dialog title="选择支付方式" v-model="paymentDialogVisible" width="30%">
       <div class="payment-options" style="display: flex; gap: 15px; justify-content: center; padding: 20px;">
         <el-button type="info" @click="handlePayment('积分支付')">积分支付</el-button>
         <el-button type="success" @click="handlePayment('余额支付')">余额支付</el-button>
