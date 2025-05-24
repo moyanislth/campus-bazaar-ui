@@ -20,7 +20,7 @@
                         <span class="original-price">原价：¥{{ product.originalPrice }}</span>
                         <span class="discount-price">现价：¥{{ product.discountPrice ===
                             null ? product.originalPrice : product.discountPrice
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="sales-info">已售 {{ product.nob }}件</div>
                     <div class="coupon-section">
@@ -137,8 +137,13 @@ export default {
 
         async addToCart() {
             try {
-                // 调用添加购物车API，参数需与后端接口匹配
-                await goodsAPI.addToCart({ productId: this.product.id, quantity: 1 });
+                // 触发添加购物车事件
+                this.$bus.emit('add-to-cart', {
+                    id: this.product.id,
+                    name: this.product.name,
+                    price: this.product.discountPrice === null ? this.product.originalPrice : this.product.discountPrice,
+                    quantity: 1
+                });
                 this.$message.success('已加入购物车');
             } catch (error) {
                 this.$message.error('添加购物车失败');
