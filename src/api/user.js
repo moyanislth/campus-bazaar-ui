@@ -145,39 +145,32 @@ const getUserCredentials = async (userId) => {
 };
 
 /**
- * 获取钱包余额接口
- * @param {String} userId 用户ID
- * @returns {Promise} 余额数据
+ * 创建新钱包
+ * @param {number} userId - 用户ID
+ * @returns {Promise} 包含请求状态的Promise对象
  */
-const getWalletBalance = (userId) => {
+ const createWallet = (userId) => {
   return request({
-    method: 'get',
-    url: '/api/wallet/balance',
-    params: { userId }
+    url: '/api/wallet/newWallet',
+    method: 'post',
+    params: { userId },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   })
 }
 
 /**
- * 更新钱包余额接口
- * @param {String} userId 用户ID
- * @param {Number} amount 变动金额
- * @param {String} type 交易类型 (recharge/payment)
- * @returns {Promise} 操作结果
+ * 获取钱包详细信息
+ * @param {number} userId - 用户ID
+ * @returns {Promise} 包含钱包数据的Promise对象
  */
-const updateWalletBalance = (userId, amount, type) => {
+ const getWalletInfo = (userId) => {
+  console.log(typeof(userId))
   return request({
-    method: 'post',
-    url: '/api/wallet/updateBalance',
-    data: {
-      userId,
-      amount: Number(amount),
-      transactionType: type
-    }
+    url: '/api/wallet/getWalletInfo',
+    method: 'get',
+    params: { userId }
   })
 }
 
-export { searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
-export default {
-  getWalletBalance,
-  updateWalletBalance
-}
+
+export {getWalletInfo, createWallet,searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
