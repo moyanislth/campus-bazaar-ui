@@ -28,7 +28,8 @@
     <!-- 商品网格布局容器 -->
     <div class="product-grid">
       <!-- 单个商品卡片，使用v-for循环生成 -->
-      <div v-for="product in products" :key="product.id" class="product-card">
+      <div v-for="product in products" :key="product.id" class="product-card"
+        @click="navigateToDetail(product.product.id)">
         <!-- 商品缩略图 -->
         <img :src="getMainImageUrl(product.productImages)" alt="商品图片" class="product-thumbnail">
 
@@ -195,7 +196,11 @@ export default {
       }
       const mimeType = this.detectImageType(mainImage.imageData); // Use imageData instead of data
       return `data:${mimeType};base64,${mainImage.imageData}`;
-    }
+    },
+    /** 跳转到商品详情页 */
+    navigateToDetail(productId) {
+      this.$router.push(`/products/${productId}`);
+    },
   }
 }
 </script>

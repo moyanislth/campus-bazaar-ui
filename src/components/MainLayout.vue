@@ -5,9 +5,17 @@
       <div class="container flex items-center justify-between">
         <h1 class="logo-text">校园二手市场</h1>
         <div class="nav-items">
-          <router-link v-for="(item, index) in navItems" :key="item.path" :to="item.path" class="nav-link">
-            {{ item.title }}
-          </router-link>
+          <template v-for="item in navItems" :key="item.title">
+            <!-- 普通路由链接 -->
+            <router-link v-if="item.path" :to="item.path" class="nav-link">
+              {{ item.title }}
+            </router-link>
+
+            <!-- 操作按钮（如登出） -->
+            <a v-else-if="item.handler" href="#" class="nav-link" @click.prevent="handleLogout()">
+              {{ item.title }}
+            </a>
+          </template>
         </div>
       </div>
     </nav>
@@ -38,6 +46,13 @@ export default {
   name: 'MainLayout',
   methods: {
     /**
+     * 处理登出操作：清空localStorage并跳转至登录页
+     */
+    handleLogout() {
+      localStorage.clear(); // 清空所有localStorage数据
+      this.$router.push('/auth'); // 跳转至认证页面
+    },
+    /**
      * 生成导航项数组
      * 根据用户角色动态添加管理入口
      */
@@ -54,14 +69,49 @@ export default {
         baseItems.push({ title: '后台', path: '/admin' })
       }
 
-      baseItems.push({ title: '登出', path: '/auth' })
+
+      // 登出项使用 `handler` 代替 `path`，绑定清空localStorage的方法
+      baseItems.push({ title: '登出', handler: 'handleLogout' });
+
       return baseItems
     }
   },
   data() {
+    // 从localStorage读取购物车数据
+    const savedCart = localStorage.getItem('campusBazaarCart')
     return {
-      navItems: this.generateNavItems()
+      navItems: this.generateNavItems(),
+      cart: {
+        cartItems: savedCart ? JSON.parse(savedCart).cartItems : [], // 购物车商品列表
+        totalPrice: 0 // 总费用
+      }
     }
+  },
+  provide() {
+    return {
+      cart: this.cart,
+    }
+  },
+  mounted() {
+    // 监听添加购物车事件
+    this.$bus.on('add-to-cart', (newItem) => {
+      // 查找购物车中是否已存在相同ID的商品
+      const existingItem = this.cart.cartItems.find(item => item.id === newItem.id);
+      if (existingItem) {
+        // 存在则数量+1
+        existingItem.quantity += newItem.quantity;
+      } else {
+        // 不存在则添加新商品
+        this.cart.cartItems.push(newItem);
+      }
+      // 计算总费用
+      this.cart.totalPrice = this.cart.totalPrice + newItem.price * newItem.quantity;
+      // 保存到localStorage
+      localStorage.setItem('campusBazaarCart', JSON.stringify(this.cart));
+      console.log(this.cart);
+      // 调试
+      // localStorage.removeItem("campusBazaarCart")
+    });
   }
 }
 
