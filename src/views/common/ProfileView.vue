@@ -303,6 +303,26 @@ export default {
   /**
    * 执行积分支付
    */
+   handlePointsPayment() {
+    if (this.userPoints >= this.paymentAmount) {
+      this.userPoints -= this.paymentAmount;
+      this.cart.cartItems = [];
+      this.cart.totalPrice = 0;
+      this.saveToLocalStorage();
+
+      this.$message.success({
+        message: '支付成功',
+        duration: 1500,
+        onClose: () => {
+          this.$router.push({ name: 'Profile' });
+        }
+      });
+    } else {
+      this.$message.error('积分不足，支付失败');
+    }
+    this.pointsDialogVisible = false;
+    this.paymentDialogVisible = false;
+  },
    handleBalancePayment() {
     if (this.userBalance >= this.paymentAmount) {
       // 扣除余额（保留两位小数）
