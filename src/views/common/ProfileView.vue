@@ -68,6 +68,28 @@
         <el-button type="primary" @click="handlePayment('微信支付')">微信支付</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="积分支付" v-model="pointsDialogVisible" width="400px">
+  <div class="points-payment-content">
+    <el-descriptions :column="1" border>
+      <el-descriptions-item label="当前积分">
+        <span class="points-value">{{ userPoints }}</span>
+      </el-descriptions-item>
+      <el-descriptions-item label="需支付金额">
+        ¥{{ paymentAmount.toFixed(2) }}
+      </el-descriptions-item>
+    </el-descriptions>
+    
+    <div class="payment-actions">
+      <el-button @click="pointsDialogVisible = false">取消</el-button>
+      <el-button 
+        type="primary"
+        @click="handlePointsPayment"
+        :disabled="paymentAmount === 0">
+        确认支付
+      </el-button>
+    </div>
+  </div>
+</el-dialog>
 
 
     <div class="address-section">
@@ -152,7 +174,10 @@ export default {
         ]
       },
       showAddressDialog: false,  // 地址编辑弹窗控制
-      editingAddress: null  // 当前编辑地址
+      editingAddress: null , // 当前编辑地址
+      pointsDialogVisible: false, // 新增积分弹窗控制
+      userPoints: 1000,          // 用户积分（初始值）
+      paymentAmount: 0            // 支付金额
     }
   },
   methods: {
@@ -164,6 +189,11 @@ export default {
     },
     // 处理支付方式选择
     handlePayment(type) {
+      if (type === '积分支付') {
+        this.paymentAmount = this.cart.totalPrice
+        this.pointsDialogVisible = true
+        return
+      }
       this.paymentDialogVisible = false;
       this.$message.success(`已选择${type}支付`);
     },
@@ -242,8 +272,25 @@ export default {
     deleteAddress(id) {
       this.user.addresses = this.user.addresses.filter(a => a.id !== id)
     }
-  }
+  },
 
+  /**
+   * 执行积分支付
+   */
+  handlePointsPayment() {
+    if (this.userPoints >= this.paymentAmount) {
+      this.userPoints -= this.paymentAmount
+      this.$message.success(`支付成功！剩余积分：${this.userPoints}`)
+      
+      // 清空购物车
+      this.cart.cartItems = []
+      this.cart.totalPrice = 0
+      this.saveToLocalStorage()
+    } else {
+      this.$message.error('积分不足，支付失败')
+    }
+    this.pointsDialogVisible = false
+  }
 }
 </script>
 
@@ -419,3 +466,22 @@ export default {
 
 }
 </style>
+
+/* 在style区块末尾添加 */
+.points-payment-content {
+  padding: 20px;
+
+  .points-value {
+    color: #67C23A;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .payment-actions {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    text-align: right;
+  }
+}
+
