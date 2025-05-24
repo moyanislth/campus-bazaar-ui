@@ -144,4 +144,40 @@ const getUserCredentials = async (userId) => {
   });
 };
 
+/**
+ * 获取钱包余额接口
+ * @param {String} userId 用户ID
+ * @returns {Promise} 余额数据
+ */
+const getWalletBalance = (userId) => {
+  return request({
+    method: 'get',
+    url: '/api/wallet/balance',
+    params: { userId }
+  })
+}
+
+/**
+ * 更新钱包余额接口
+ * @param {String} userId 用户ID
+ * @param {Number} amount 变动金额
+ * @param {String} type 交易类型 (recharge/payment)
+ * @returns {Promise} 操作结果
+ */
+const updateWalletBalance = (userId, amount, type) => {
+  return request({
+    method: 'post',
+    url: '/api/wallet/updateBalance',
+    data: {
+      userId,
+      amount: Number(amount),
+      transactionType: type
+    }
+  })
+}
+
 export { searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
+export default {
+  getWalletBalance,
+  updateWalletBalance
+}
