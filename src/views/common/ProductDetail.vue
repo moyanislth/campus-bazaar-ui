@@ -20,7 +20,7 @@
                         <span class="original-price">原价：¥{{ product.originalPrice }}</span>
                         <span class="discount-price">现价：¥{{ product.discountPrice ===
                             null ? product.originalPrice : product.discountPrice
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="sales-info">已售 {{ product.nob }}件</div>
                     <div class="coupon-section">
@@ -38,6 +38,35 @@
                 <el-col :span="24">
                     <h3>商品描述</h3>
                     <p>{{ product.description }}</p>
+
+                    <!-- 用户评论区域 -->
+                    <div class="comments-section">
+                        <h3 class="comments-title">用户评论 ({{ comments.length }})</h3>
+
+                        <!-- 评论输入区域 -->
+                        <div class="comment-input-area">
+                            <el-input type="textarea" :rows="4" placeholder="请输入您的评论..." v-model="newComment"
+                                class="comment-textarea" resize="none"></el-input>
+                            <div class="comment-actions">
+                                <el-button type="primary" @click="submitComment" :disabled="!newComment.trim()"
+                                    class="submit-btn">发布评论</el-button>
+                            </div>
+                        </div>
+
+                        <!-- 评论列表 -->
+                        <div v-if="comments.length" class="comments-list">
+                            <el-card v-for="comment in comments" :key="comment.id" class="comment-card" shadow="hover">
+                                <div class="comment-header">
+                                    <span class="user-name">{{ comment.userName }}</span>
+                                    <span class="comment-time">{{ comment.createdAtStr }}</span>
+                                </div>
+                                <p class="comment-content">{{ comment.content }}</p>
+                            </el-card>
+                        </div>
+                        <div v-else class="no-comments">
+                            <el-empty description="暂无评论，快来发表你的看法吧~" :image-size="100"></el-empty>
+                        </div>
+                    </div>
                 </el-col>
             </el-row>
         </el-card>
@@ -63,15 +92,49 @@ export default {
     data() {
         return {
             userId: -1,
+            userName: '', // 存储用户名
             productId: -1,
             product: {}, // 初始化为空对象避免访问属性时报错
             coupons: [],
             images: [],
             viewerVisible: false,  // 控制查看器显示
-            currentIndex: 0        // 当前查看的图片索引
+            currentIndex: 0,       // 当前查看的图片索引
+            newComment: '', // 存储新评论内容
+            comments: []    // 存储所有评论
         };
     },
     methods: {
+        submitComment() {
+            // trim() 用于移除字符串两端的空白字符
+            if (!this.newComment.trim()) return;
+
+            const json = JSON.parse(localStorage.getItem('userInfo'));
+            this.userName = json.username; // 从 localStorage 中获取用户名
+
+            // 创建新评论对象
+            const newCommentObj = {
+                id: Date.now(), // 使用时间戳作为临时ID
+                productId: this.productId,
+                userId: this.userId,
+                userName: this.userName, // 这里应该替换为实际用户名
+                starRating: null,
+                content: this.newComment,
+                createdAt: new Date(),
+                createdAtStr: new Date().toLocaleString() // 格式化当前时间
+            };
+
+            // 添加到评论列表
+            this.comments.unshift(newCommentObj); // 新评论显示在最前面
+
+            // 清空输入框
+            this.newComment = '';
+
+            // 将评论保存到服务器
+            this.saveCommentToServer(newCommentObj);
+        },
+        saveCommentToServer(comment) {
+            goodsAPI.addComment(comment)
+        },
         // 打开图片查看器
         // 打开图片查看器（修正URL处理逻辑）
         openViewer(index) {
@@ -82,18 +145,6 @@ export default {
         // 关闭图片查看器
         closeViewer() {
             this.viewerVisible = false;
-        },
-
-        async initData() {
-            try {
-                this.productId = this.$route.params.id;
-                const res = await goodsAPI.getProductById(this.productId);
-                this.product = res.data?.product || {};
-                this.images = res.data?.productImages || [];
-            } catch (error) {
-                console.error('获取商品详情失败:', error);
-                this.$message.error('加载商品详情失败');
-            }
         },
 
         detectImageType(buffer) {
@@ -115,23 +166,26 @@ export default {
             return `data:${mimeType};base64,${img.imageData}`;
         },
         async initData() {
-            const productId = this.$route.params.id;
+            this.productId = this.$route.params.id;
             const json = JSON.parse(localStorage.getItem('userInfo'));
             this.userId = json.userId;
 
-
             try {
-                // 初始化商品信息
-                const res = await goodsAPI.getProductById(productId); // 直接获取响应对象
-                // 假设后端返回结构为 { data: { product, productImages } }
-                this.product = res.data.product;
-                this.images = res.data.productImages;
+                const [productRes, commentsRes] = await Promise.all([
+                    goodsAPI.getProductById(this.productId),
+                    goodsAPI.getCommentsByProductId(this.productId)
+                ]);
+
+                this.product = productRes.data?.product || {};
+                this.images = productRes.data?.productImages || [];
+                this.comments = commentsRes.data || []; // 初始化评论数据
+                console.log(this.comments);
 
                 // TODO: 初始化优惠券信息
                 // this.coupons = await goodsAPI.getCouponsByProductId(productId);
-
             } catch (error) {
                 console.error('获取商品详情失败:', error);
+                this.$message.error('加载商品详情失败');
             }
         },
 
@@ -155,6 +209,131 @@ export default {
 </script>
 
 <style scoped>
+/* 评论区域样式 */
+.comments-section {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.comments-title {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 评论输入区域 */
+.comment-input-area {
+    margin-bottom: 30px;
+    background: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.comment-textarea {
+    width: 100%;
+    min-height: 120px;
+    /* 固定高度 */
+    max-height: 200px;
+    margin-bottom: 15px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.comment-textarea:focus {
+    border-color: #409eff;
+    outline: none;
+}
+
+.comment-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.submit-btn {
+    padding: 10px 25px;
+    font-size: 14px;
+}
+
+/* 评论列表样式 */
+.comments-list {
+    margin-top: 20px;
+}
+
+.comment-card {
+    margin-bottom: 15px;
+    transition: all 0.3s;
+    border: none;
+    border-radius: 6px;
+}
+
+.comment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #eee;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 15px;
+}
+
+.comment-time {
+    font-size: 12px;
+    color: #999;
+}
+
+.comment-content {
+    color: #555;
+    line-height: 1.6;
+    font-size: 14px;
+    margin: 0;
+    padding: 5px 0;
+}
+
+.no-comments {
+    padding: 30px 0;
+    text-align: center;
+    color: #999;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .comment-textarea {
+        min-height: 100px;
+    }
+
+    .submit-btn {
+        width: 100%;
+    }
+}
+
+.user-name {
+    font-weight: bold;
+}
+
+.user-name {
+    font-weight: 600;
+}
+
+
+
 .product-detail {
     max-width: 1200px;
     margin: 2rem auto;

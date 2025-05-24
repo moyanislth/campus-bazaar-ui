@@ -104,6 +104,33 @@ const getMerchantName = (merchantId) => {
 }
 
 /**
+ * 获取商品评论信息
+ * @returns {Promise} 商品信息请求结果
+ */
+const getCommentsByProductId = (productId) => {
+  return request({
+    method: 'get',
+    url: '/api/product/getCommentsByProductId',
+    params: {
+      productId: productId,
+    }
+  })
+}
+
+/**
+ * 为商品添加评论
+ * @param {} commentData 
+ * @returns 
+ */
+const addComment = (commentData) => {
+  return request({
+    method: 'post',
+    url: '/api/product/addComment',
+    data: commentData,
+  })
+}
+
+/**
  * 更新商品状态
  * @returns {Promise} 商品信息请求结果
  */
@@ -134,4 +161,4 @@ const rejectProduct = (id) => {
   return updateProductStatus(id, 2);
 }
 
-export { userSearch, getAllProductsWithImg, approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
+export { addComment,getCommentsByProductId,userSearch, getAllProductsWithImg, approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
