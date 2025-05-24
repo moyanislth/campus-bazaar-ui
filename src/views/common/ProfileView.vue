@@ -297,10 +297,8 @@ export default {
     /** 删除地址 */
     deleteAddress(id) {
       this.user.addresses = this.user.addresses.filter(a => a.id !== id)
-    }
-  },
-
-  /**
+    },
+    /**
    * 执行积分支付
    */
    handlePointsPayment() {
@@ -350,6 +348,9 @@ export default {
     this.balanceDialogVisible = false;
     this.paymentDialogVisible = false;
   }
+  },
+
+  
 }
 </script>
 
