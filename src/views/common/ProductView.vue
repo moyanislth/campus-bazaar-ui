@@ -16,7 +16,8 @@
 
         <!-- 商品列表 -->
         <div class="product-list">
-            <div v-for="product in displayedProducts" :key="product.product.id" class="product-item">
+            <div v-for="product in displayedProducts" :key="product.product.id" class="product-item"
+                @click="navigateToDetail(product.product.id)">
                 <img :src="getMainImageUrl(product.productImages)" class="product-image" />
                 <div class="product-details">
                     <h3 class="product-name">{{ product.product.name }}</h3>
@@ -73,7 +74,6 @@ export default {
             this.loading = true;
             try {
                 const response = await goodsAPI.userSearch(this.searchQuery, this.sortBy);
-                console.log('API响应数据:', response.data); // 调试用
 
                 // 确保使用新数组触发响应式更新
                 this.allProducts = Array.isArray(response.data) ? [...response.data] : [];
@@ -97,7 +97,10 @@ export default {
             }
         },
 
-        // 图片处理方法保持不变
+        /** 跳转到商品详情页 */
+        navigateToDetail(productId) {
+            this.$router.push(`/products/${productId}`);
+        },
         detectImageType(buffer) {
             const header = new Uint8Array(buffer.slice(0, 4));
             if (header[0] === 0xFF && header[1] === 0xD8) return 'image/jpeg';
