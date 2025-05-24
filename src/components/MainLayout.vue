@@ -70,8 +70,8 @@ export default {
       if (json != null && json.role === 2) {
         baseItems.push({ title: '后台', path: '/admin' })
       }
-      else if (json!= null && json.role === 1) {
-        baseItems.push({ title: '上架', path: '/publish' })
+      if (json!= null && json.role === 1) {
+        baseItems.push({ title: '上架', path: '/merchant' })
       }
 
       // 登出项使用 `handler` 代替 `path`，绑定清空localStorage的方法
