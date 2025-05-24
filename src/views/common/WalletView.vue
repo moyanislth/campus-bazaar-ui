@@ -33,10 +33,14 @@
 </template>
 
 <script>
+import {userAPI} from '@/api'
+import { User } from '@element-plus/icons-vue'
 /**
  * 钱包功能主视图
  * 包含余额显示、积分显示、交易记录功能
  */
+
+ 
 export default {
   data() {
     return {
@@ -47,44 +51,33 @@ export default {
       paymentRecords: []
     }
   },
-  components: {
-    TransactionList: {
-      props: ['list'],
-      template: `
-        <div class="transaction-list">
-          <div v-for="(item, index) in list" :key="index" class="transaction-item">
-            <div class="info">
-              <span class="type">{{ item.type }}</span>
-              <span class="time">{{ item.time }}</span>
-            </div>
-            <span class="amount" :class="{ 'income': item.amount > 0 }">
-              {{ item.amount > 0 ? '+' : '' }}{{ item.amount.toFixed(2) }}
-            </span>
-          </div>
-        </div>
-      `
+
+  mounted() {
+    this.fetchWalletInfo()
+    this.fetchTransactionRecords()
+  },
+  methods: {
+    // 模拟获取余额和积分
+    fetchWalletInfo() {
+      const json = JSON.parse(localStorage.getItem('userInfo'));
+      const userId = json.userId;
+      const res = userAPI.getWalletInfo(userId)
+      this.balance = 1000.00;  // 示例余额
+      this.integral = 500;     // 示例积分
+    },
+
+    // 模拟获取交易记录
+    fetchTransactionRecords() {
+      this.rechargeRecords = [
+        { id: 1, type: '充值', amount: 100.00, time: '2024-08-20 14:30' },
+        { id: 2, type: '充值', amount: 200.00, time: '2024-08-21 10:15' }
+      ]
     }
   }
+
 }
 </script>
-mounted() {
-  // ... existing code ...
-  this.fetchWalletData();
-},
-methods: {
-  async fetchWalletData() {
-    try {
-      const [balanceRes, integralRes] = await Promise.all([
-        getWalletBalance(),
-        getUserIntegral()
-      ]);
-      this.balance = balanceRes.data;
-      this.integral = integralRes.data.integral; 
-    } catch (error) {
-      console.error('数据获取失败:', error);
-    }
-  }
-}
+
 
 <style scoped>
 .integral {
