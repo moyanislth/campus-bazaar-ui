@@ -63,7 +63,7 @@ export default {
       const userId = json.userId;
       const res = userAPI.getWalletInfo(userId)
       this.balance = 1000.00;  // 示例余额
-      this.integral = 500;     // 示例积分
+      this.integral = 1000;     // 示例积分
     },
 
     // 模拟获取交易记录
