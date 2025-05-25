@@ -30,7 +30,13 @@ const routes = [
         path: '/wallet',
         name: 'Wallet',
         component: () => import('@/views/common/WalletView.vue'),
-        meta: { requiresAuth: false } // 修改此处为false
+
+      },
+      {
+        path: '/merchant',
+        name: 'Merchant',
+        component: () => import('@/views/common/MerchantView.vue'),
+
       }
     ]
   },

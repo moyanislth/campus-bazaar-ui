@@ -87,6 +87,7 @@
         <el-button type="primary" @click="handlePayment('微信支付')">微信支付</el-button>
       </div>
     </el-dialog>
+
     <el-dialog :title="currentPaymentType" v-model="pointsDialogVisible" width="400px">
       <div class="points-payment-content">
         <el-descriptions :column="1" border>
@@ -106,6 +107,7 @@
         </div>
       </div>
     </el-dialog>
+
 
 
     <div class="address-section">
@@ -220,11 +222,13 @@ export default {
       showAddressDialog: false,  // 地址编辑弹窗控制
       editingAddress: null, // 当前编辑地址
       pointsDialogVisible: false, // 新增积分弹窗控制
+
       wallet: {  // 钱包信息
         balance: -1,  // 余额
         integral: -1,     // 积分
       },
       paymentAmount: 0            // 支付金额
+
     }
   },
   methods: {
@@ -390,6 +394,7 @@ export default {
 
     },
     // 处理支付方式选择
+
     async handlePayment(type) {
       this.currentPaymentType = type // 设置当前支付类型
       this.pointsDialogVisible = true
@@ -406,6 +411,7 @@ export default {
         console.log(res.data)
       }
     },
+
     /**
      * 更新购物车总价
      */
@@ -507,6 +513,7 @@ export default {
       this.$message.success('地址保存成功');
     },
     /** 删除地址 */
+
     async deleteAddress(name) {
       userAPI.deleteAddress(this.user.userId, name).then(async () => {
         const user_profile = await userAPI.getUserProfile(this.user.userId);
@@ -708,9 +715,6 @@ export default {
   padding-top: 12px;
 
 }
-</style>
-
-/* 在style区块末尾添加 */
 .points-payment-content {
 padding: 20px;
 
@@ -720,6 +724,7 @@ font-weight: bold;
 font-size: 1.2em;
 }
 
+
 .payment-actions {
 margin-top: 25px;
 padding-top: 15px;
@@ -727,3 +732,6 @@ border-top: 1px solid #eee;
 text-align: right;
 }
 }
+
+</style>
+
