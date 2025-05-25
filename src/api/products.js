@@ -161,4 +161,26 @@ const rejectProduct = (id) => {
   return updateProductStatus(id, 2);
 }
 
-export { addComment,getCommentsByProductId,userSearch, getAllProductsWithImg, approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
+/**
+ * 上架商品
+ * @returns {Promise} 商品信息请求结果
+ */
+const postGoods = (formData) => {
+  return request({
+    method: 'post',
+    url: '/api/product/postGoods',
+    data: formData,
+  })
+}
+
+const getGoodsList = (userId) => {
+  return request({
+    method: 'get',
+    url: '/api/product/getGoodsList',
+    params: {
+      userId: userId,
+    }
+  })
+}
+
+export { getGoodsList,postGoods,addComment,getCommentsByProductId,userSearch, getAllProductsWithImg, approveProduct, rejectProduct, updateProductStatus, getMerchantName, getProductImages, searchProducts, getProductById, getAllProducts };
