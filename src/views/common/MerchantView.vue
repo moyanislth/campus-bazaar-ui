@@ -13,6 +13,11 @@
         <el-icon><Box /></el-icon>
         <span>商品橱柜</span>
       </el-menu-item>
+      <el-menu-item index="3">
+        <el-icon><Package /></el-icon>
+        <span>发货管理</span>
+      </el-menu-item>
+      
     </el-menu>
 
     <!-- 主内容区域 -->
@@ -25,13 +30,14 @@
 <script>
 import PublishGoods from '../../components/merchant/PublishGoods.vue';
 import GoodsCabinet from '../../components/merchant/GoodsCabinet.vue';
+import ShippingManagement from '../../components/merchant/ShippingManagement.vue';
 
 /**
  * 商家主视图组件
  * 包含商品管理和橱柜展示功能
  */
 export default {
-  components: { PublishGoods, GoodsCabinet },
+  components: { PublishGoods, GoodsCabinet, ShippingManagement },
   
   data() {
     return {
@@ -50,6 +56,15 @@ export default {
       this.currentView = index === '1' 
         ? 'PublishGoods' 
         : 'GoodsCabinet';
+
+        if (index === '2') {
+          this.currentView = 'GoodsCabinet'; // 假设GoodsCabinet是一个新的组件
+        }
+
+        if (index === '3') {
+          this.currentView = 'ShippingManagement'; // 假设ShippingManagement是一个新的组件
+        }
+        
     }
   }
 }
