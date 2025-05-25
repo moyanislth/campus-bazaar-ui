@@ -7,14 +7,27 @@
         </el-form-item>
         
         <!-- 商品价格输入 -->
-        <el-form-item label="销售价格">
+        <el-form-item label="销售价格" required>
           <el-input-number 
-            v-model="formData.price" 
+            v-model="formData.original_price" 
             :min="0" 
             :precision="2"
             controls-position="right" />
         </el-form-item>
-  
+        <!-- 商品类别 --> 
+        <el-form-item label="商品类别" required>
+          <el-select v-model="formData.category" placeholder="请选择商品类别">
+            <el-option label="电子产品" value="electronics" />
+            <el-option label="家居用品" value="home" />
+            <el-option label="服装服饰" value="clothing" />
+          </el-select>
+        </el-form-item> 
+        
+        <!-- 商品库存数量 --> 
+        <el-form-item label="库存数量" required>
+          <el-input-number v-model="formData.stock" :min="0" controls-position="right" />
+        </el-form-item>
+
         <!-- 图片上传组件 -->
         <el-form-item label="商品主图">
           <el-upload
