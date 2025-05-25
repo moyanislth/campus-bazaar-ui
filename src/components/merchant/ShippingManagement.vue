@@ -62,7 +62,7 @@ export default {
         {
           orderId: 'DD202307001',
           productId: 1,
-          productName: '无线蓝牙耳机',
+          productName: '商品1号',
           quantity: 2,
           status: '待发货',
           createTime: '2023-07-01 14:30'
@@ -70,7 +70,7 @@ export default {
         {
           orderId: 'DD202307002',
           productId: 2,
-          productName: '运动水壶',
+          productName: '商品2号',
           quantity: 5,
           status: '待发货',
           createTime: '2023-07-02 09:15'

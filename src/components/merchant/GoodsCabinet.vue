@@ -26,21 +26,21 @@ export default {
       goodsList: [
         {
           id: 1,
-          name: '无线蓝牙耳机',
+          name: '商品1号',
           category: '电子产品',
-          price: 299.0,
+          price: 80.0,
           stock: 15
         },
         {
           id: 2,
-          name: '运动水壶',
+          name: '商品2号',
           category: '家居用品',
           price: 45.5,
           stock: 8
         },
         {
           id: 3,
-          name: '上衣',
+          name: '商品3号',
           category: '服装服饰',
           price: 128.0,
           stock: 22
