@@ -50,6 +50,9 @@
   </template>
   
   <script>
+  import axios from 'axios';
+  
+
   export default {
     data() {
       return {
@@ -65,7 +68,7 @@
         /** 商品主图列表 */
         images: [],
         /** 商品状态（立即上架/存入仓库） */
-        status: 'pending'
+        status: 0, // 0: 待审核, 1: 已上架, 2: 已下架  
       },
       rules: {
         name: [
@@ -82,10 +85,16 @@
       /**
        * 处理表单提交
        */
-      handleSubmit() {
-        console.log('提交商品数据:', this.formData)
-        this.$message.success('商品已提交审核')
-      }
-    }
+       async handleSubmit() {
+       try {
+         const response = await axios.get('/api/product/getAllProductsWithImg', this.formData);
+         console.log('后端响应:', response.data);
+         this.$message.success('商品已提交审核');
+       } catch (error) {
+         console.error('提交失败:', error);
+         this.$message.error('提交失败，请重试');
+       }
+     }
+   }
   }
   </script>
