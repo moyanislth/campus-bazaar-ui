@@ -23,5 +23,5 @@ export default class DateUtil {
         };
         
         return date.toLocaleString('zh-CN', options);
-    }
+    } 
 }

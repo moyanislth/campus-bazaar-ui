@@ -43,6 +43,19 @@ const getUser = (userId) => {
 }
 
 /**
+ * 获取用户账户信息
+ * @param {String} userId 用户ID
+ * @returns {Promise} 用户账户信息
+ */
+const getUserProfile = (userId) => {
+  return request({
+    method: 'get',
+    url: '/api/user/getUserProfile',
+    params: { userId },
+  })
+}
+
+/**
  * 更新用户状态
  * @param {String} userId 用户ID
  * @returns {Promise} 审核结果
@@ -164,7 +177,6 @@ const getUserCredentials = async (userId) => {
  * @returns {Promise} 包含钱包数据的Promise对象
  */
  const getWalletInfo = (userId) => {
-  console.log(typeof(userId))
   return request({
     url: '/api/wallet/getWalletInfo',
     method: 'get',
@@ -172,5 +184,44 @@ const getUserCredentials = async (userId) => {
   })
 }
 
+/**
+ * 付款接口
+ * @param {number} userId - 用户ID
+ * @param {string} type - 付款类型
+ * @param {number} amount - 付款金额
+ * @returns {Promise} 包含请求状态的Promise对象
+ */
+ const pay = (userId, type, amount) => {
+  return request({
+    url: '/api/user/pay',
+    method: 'post',
+    params: { userId, type, amount }
+  })
+ }
 
-export {getWalletInfo, createWallet,searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
+/**
+* 保存地址信息
+*/
+const saveAddress = (userId, address) => {
+  const addressData = { userId, address }; // 构造请求体数据
+  return request({
+    url: '/api/user/saveAddress',
+    method: 'post',
+    data: addressData // 使用data传递请求体（替代params查询参数），避免URL编码问题
+  })
+}
+
+/**
+* 保存地址信息
+*/
+const deleteAddress = (userId, name) => {
+  const addressData = { userId, name }; // 构造请求体数据
+  return request({
+    url: '/api/user/deleteAddress',
+    method: 'post',
+    data: addressData // 使用data传递请求体（替代params查询参数），避免URL编码问题
+  })
+}
+
+
+export {deleteAddress, saveAddress,getUserProfile,pay,getWalletInfo, createWallet,searchUsers, getUserCredentials, getUser, getAllUsers, register, login, getCaptcha, checkCaptcha, updateUserStatusUser };
