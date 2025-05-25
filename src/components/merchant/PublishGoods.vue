@@ -54,11 +54,29 @@
     data() {
       return {
         formData: {
-          name: '',
-          price: 0,
-          images: []
-        }
+        /** 商品名称 */
+        name: '',
+        /** 商品分类ID */
+        category: null,
+        /** 销售价格 */
+        original_price: 0,
+        /** 商品库存 */
+        stock: 0,
+        /** 商品主图列表 */
+        images: [],
+        /** 商品状态（立即上架/存入仓库） */
+        status: 'pending'
+      },
+      rules: {
+        name: [
+          { required: true, message: '请输入商品名称', trigger: 'blur' },
+          { min: 3, max: 50, message: '长度在3到50个字符', trigger: 'blur' }
+        ],
+        category: [
+          { required: true, message: '请选择商品分类', trigger: 'change' }
+        ]
       }
+    }
     },
     methods: {
       /**
