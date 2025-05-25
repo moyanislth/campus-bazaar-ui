@@ -7,10 +7,7 @@
         <el-table-column prop="createTime" label="下单时间" />
         <el-table-column label="状态">
           <template #default="scope">
-            <el-tag 
-              :type="scope.row.status === '已发货' ? 'success' : 'info'"
-              effect="plain"
-            >
+            <el-tag :type="scope.row.status === '已发货' ? 'success' : 'info'" effect="plain">
               {{ scope.row.status }}
             </el-tag>
           </template>
@@ -52,9 +49,9 @@ export default {
       }
     },
     mounted() {
-    this.fetchPendingOrders()
-  }
-    
+      this.fetchPendingOrders()
+    }
+
   },
   data() {
     return {
@@ -76,9 +73,8 @@ export default {
           createTime: '2023-07-02 09:15'
         }
       ]
-      
+
     }
   }
 }
 </script>
-

@@ -1,23 +1,26 @@
 <template>
   <div class="merchant-container">
     <!-- 侧边导航栏 -->
-    <el-menu 
-      :default-active="currentActive"
-      class="side-menu"
-      @select="handleMenuSelect">
+    <el-menu :default-active="currentActive" class="side-menu" @select="handleMenuSelect">
       <el-menu-item index="1">
-        <el-icon><Goods /></el-icon>
+        <el-icon>
+          <Goods />
+        </el-icon>
         <span>上架商品</span>
       </el-menu-item>
       <el-menu-item index="2">
-        <el-icon><Box /></el-icon>
+        <el-icon>
+          <Box />
+        </el-icon>
         <span>商品橱柜</span>
       </el-menu-item>
       <el-menu-item index="3">
-        <el-icon><Package /></el-icon>
+        <el-icon>
+          <Package />
+        </el-icon>
         <span>发货管理</span>
       </el-menu-item>
-      
+
     </el-menu>
 
     <!-- 主内容区域 -->
@@ -38,7 +41,7 @@ import ShippingManagement from '../../components/merchant/ShippingManagement.vue
  */
 export default {
   components: { PublishGoods, GoodsCabinet, ShippingManagement },
-  
+
   data() {
     return {
       currentActive: '1',
@@ -53,18 +56,18 @@ export default {
      */
     handleMenuSelect(index) {
       this.currentActive = index;
-      this.currentView = index === '1' 
-        ? 'PublishGoods' 
+      this.currentView = index === '1'
+        ? 'PublishGoods'
         : 'GoodsCabinet';
 
-        if (index === '2') {
-          this.currentView = 'GoodsCabinet'; // 假设GoodsCabinet是一个新的组件
-        }
+      if (index === '2') {
+        this.currentView = 'GoodsCabinet'; // 假设GoodsCabinet是一个新的组件
+      }
 
-        if (index === '3') {
-          this.currentView = 'ShippingManagement'; // 假设ShippingManagement是一个新的组件
-        }
-        
+      if (index === '3') {
+        this.currentView = 'ShippingManagement'; // 假设ShippingManagement是一个新的组件
+      }
+
     }
   }
 }

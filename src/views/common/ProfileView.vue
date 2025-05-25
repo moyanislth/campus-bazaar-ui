@@ -243,20 +243,28 @@ export default {
       this.user.userId = userId; // 用户ID
 
       const user_profile = await userAPI.getUserProfile(userId);
-      this.user.introduction = user_profile.data.bio; // 个人介绍
-      // 处理字符串类型的地址数据（支持数组格式或单个地址）
-      this.handleAddress(user_profile)
-      // 地址列表
-      this.user.wechat = user_profile.data.wechat; // 微信
+      console.log(user_profile);
+      if (user_profile.data != null) {
+        if (this.user.introduction) {
+          this.user.introduction = user_profile.data.introduction; // 个人介绍
+        }
+        // 处理字符串类型的地址数据（支持数组格式或单个地址）
+        this.handleAddress(user_profile)
+        // 地址列表
+        this.user.wechat = user_profile.data.wechat; // 微信
+      }
 
     },
     /**
- * 处理用户地址数据，统一转换为标准格式的地址数组
- * @param {Object} user_profile 用户资料对象
- */
+     * 处理用户地址数据，统一转换为标准格式的地址数组
+     * @param {Object} user_profile 用户资料对象
+     */
     handleAddress(user_profile) {
-      const deliveryAddress = user_profile.data.deliveryAddress;
-      console.log('原始地址数据:', deliveryAddress);
+      let deliveryAddress = []
+      if (user_profile.data.deliveryAddress != null) {
+        deliveryAddress = user_profile.data.deliveryAddress;
+        console.log('原始地址数据:', deliveryAddress);
+      }
 
       try {
         // 初始化最终地址数组
@@ -399,17 +407,6 @@ export default {
       this.currentPaymentType = type // 设置当前支付类型
       this.pointsDialogVisible = true
       this.paymentAmount = this.cart.totalPrice
-
-      const userId = JSON.parse(localStorage.getItem('userInfo'))?.userId;
-      const res = await userAPI.pay(userId, this.currentPaymentType, this.paymentAmount)
-      console.log(this.userId)
-      console.log(res)
-      if (res.data.code === 200) {
-        this.$message.success('支付成功！')
-      } else {
-        this.$message.error('支付失败！')
-        console.log(res.data)
-      }
     },
 
     /**
@@ -509,8 +506,6 @@ export default {
         // 保存失败时回滚本地数据
         this.user.addresses = originalAddresses;
       });
-
-      this.$message.success('地址保存成功');
     },
     /** 删除地址 */
 
@@ -522,21 +517,19 @@ export default {
       })
     },
     /**
-     * 执行积分支付
+     * 执行支付
      */
-    handlePointsPayment() {
-      if (this.wallet.integral >= this.paymentAmount) {
-        this.wallet.integral -= this.paymentAmount
-        this.$message.success(`支付成功！剩余积分：${this.wallet.integral}`)
-
-        // 清空购物车
-        this.cart.cartItems = []
-        this.cart.totalPrice = 0
-        this.saveToLocalStorage()
+    async handlePointsPayment() {
+      const userId = JSON.parse(localStorage.getItem('userInfo'))?.userId;
+      const res = await userAPI.pay(userId, this.currentPaymentType, this.paymentAmount)
+      console.log(this.userId)
+      console.log(res)
+      if (res.data.code === 200) {
+        this.$message.success('支付成功！')
       } else {
-        this.$message.error('积分不足，支付失败')
+        this.$message.error('支付失败！')
+        console.log(res.data)
       }
-      this.pointsDialogVisible = false
     }
   },
 
@@ -715,23 +708,22 @@ export default {
   padding-top: 12px;
 
 }
+
 .points-payment-content {
-padding: 20px;
+  padding: 20px;
 
-.points-value {
-color: #67C23A;
-font-weight: bold;
-font-size: 1.2em;
+  .points-value {
+    color: #67C23A;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+
+  .payment-actions {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    text-align: right;
+  }
 }
-
-
-.payment-actions {
-margin-top: 25px;
-padding-top: 15px;
-border-top: 1px solid #eee;
-text-align: right;
-}
-}
-
 </style>
-
