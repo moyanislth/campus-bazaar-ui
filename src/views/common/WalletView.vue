@@ -14,7 +14,7 @@
       </div>
       <div class="integral">
         <span class="label">积分余额：</span>
-        <span class="amount">   {{ integral }}</span>
+        <span class="amount"> {{ integral }}</span>
       </div>
     </div>
 
@@ -33,14 +33,14 @@
 </template>
 
 <script>
-import {userAPI} from '@/api'
+import { userAPI } from '@/api'
 import { User } from '@element-plus/icons-vue'
 /**
  * 钱包功能主视图
  * 包含余额显示、积分显示、交易记录功能
  */
 
- 
+
 export default {
   data() {
     return {
@@ -82,7 +82,7 @@ export default {
 <style scoped>
 .integral {
   background: white;
-  
+
   box-shadow: 0 2px 8px rgb(255, 255, 255);
 }
 
@@ -97,7 +97,7 @@ export default {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn {
